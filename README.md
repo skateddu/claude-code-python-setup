@@ -183,7 +183,7 @@ Key characteristics:
 
 This setup's `CLAUDE.md` contains project specs (OS, language, tools), naming conventions, file organization, common commands, and `@import` references to all rules.
 
-> Full documentation: [code.claude.com/docs/en/claude-md](https://code.claude.com/docs/en/claude-md)
+> Full documentation: [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)
 
 ### Rules (`.claude/rules/`)
 
@@ -197,7 +197,7 @@ Key characteristics:
 - **One topic per file**: keeps each rule focused and easy to update independently
 - **Referenced by agents**: agents point to rules instead of duplicating standards (e.g., "see `.claude/rules/security.md`")
 
-> Full documentation: [code.claude.com/docs/en/claude-md](https://code.claude.com/docs/en/claude-md)
+> Full documentation: [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)
 
 | Rule | Scope | Description |
 |------|-------|-------------|
