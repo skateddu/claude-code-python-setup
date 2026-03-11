@@ -319,10 +319,10 @@ Contributions are welcome! If you have ideas for new agents, skills, rules, or i
 
 For bug reports or suggestions, open an [issue](https://github.com/skateddu/claude-code-python-setup/issues).
 
-## Acknowledgments
+## References
 
 This project builds on top of the official Claude Code documentation and tooling by Anthropic:
 
-- [Claude Code Documentation](https://code.claude.com/docs) — setup guides, CLAUDE.md reference, skills, agents, MCP configuration
-- [Anthropic GitHub](https://github.com/anthropics) — official repositories and examples
-- [Model Context Protocol](https://modelcontextprotocol.io/) — open standard for LLM-tool integrations
+- [Claude Code Documentation](https://code.claude.com/docs): setup guides, CLAUDE.md reference, skills, agents, MCP configuration
+- [Anthropic GitHub](https://github.com/anthropics): official repositories and examples
+- [Model Context Protocol](https://modelcontextprotocol.io/): open standard for LLM-tool integrations
