@@ -62,18 +62,29 @@ claude-code-python-setup/
 ├── .claude/
 │   ├── agents/              # Specialized subagents
 │   │   ├── architect.md
+│   │   ├── code-architect.md
+│   │   ├── code-explorer.md
 │   │   ├── code-reviewer.md
+│   │   ├── comment-analyzer.md
 │   │   ├── database-reviewer.md
 │   │   ├── planner.md
+│   │   ├── pr-test-analyzer.md
 │   │   ├── refactor-cleaner.md
 │   │   ├── security-reviewer.md
-│   │   └── tdd-guide.md
+│   │   ├── silent-failure-hunter.md
+│   │   ├── tdd-guide.md
+│   │   └── type-design-analyzer.md
 │   ├── commands/            # Slash commands (/command-name)
 │   │   ├── build-fix.md
+│   │   ├── clean-gone.md
+│   │   ├── code-review.md
+│   │   ├── commit.md
+│   │   ├── commit-push-pr.md
+│   │   ├── feature-dev.md
 │   │   ├── notebook-review.md
 │   │   ├── orchestrate.md
 │   │   ├── review-pr.md
-│   │   ├── review-pr-ci.md
+│   │   ├── revise-claude-md.md
 │   │   └── test-coverage.md
 │   ├── rules/               # Modular coding standards
 │   │   ├── api-patterns.md  # FastAPI/Pydantic (path-scoped)
@@ -86,8 +97,9 @@ claude-code-python-setup/
 │   │   └── testing.md
 │   └── skills/              # Reference docs and scripts
 │       ├── api-design/
-│       ├── canvas-design/
 │       ├── claude-api/
+│       ├── claude-automation-recommender/
+│       ├── claude-md-improver/
 │       ├── database-migrations/
 │       ├── deployment-patterns/
 │       ├── django-patterns/
@@ -100,11 +112,10 @@ claude-code-python-setup/
 │       ├── frontend-design/
 │       ├── mcp-builder/
 │       ├── pdf/
+│       ├── playground/
 │       ├── postgres-patterns/
 │       ├── pptx/
 │       ├── skill-creator/
-│       ├── slack-gif-creator/
-│       ├── theme-factory/
 │       ├── webapp-testing/
 │       └── xlsx/
 ├── mcp_config/
@@ -227,12 +238,18 @@ Key characteristics:
 | Agent | Description |
 |-------|-------------|
 | **architect** | System design, ADRs, trade-off analysis, scalability planning |
+| **code-architect** | Implementation blueprints: file plans, data flow, build sequence |
+| **code-explorer** | Codebase tracing: execution paths, architecture mapping, dependency analysis |
 | **code-reviewer** | Code quality, Python patterns, concurrency, FastAPI/Django/Flask checks |
+| **comment-analyzer** | Code comment accuracy, completeness, and comment rot detection |
 | **database-reviewer** | PostgreSQL schema, query optimization, and migration review |
 | **planner** | Task decomposition and implementation planning |
+| **pr-test-analyzer** | Test coverage quality: behavioral gaps, critical paths, edge cases |
 | **refactor-cleaner** | Dead code detection, refactoring (vulture, ruff) |
 | **security-reviewer** | Security audit (bandit, safety, pip-audit, OWASP Top 10) |
+| **silent-failure-hunter** | Error handling audit: silent failures, catch blocks, fallback behavior |
 | **tdd-guide** | Test-driven development with pytest |
+| **type-design-analyzer** | Type design quality: encapsulation, invariants, enforcement ratings |
 
 ### Skills (`.claude/skills/`)
 
@@ -254,8 +271,9 @@ Key characteristics:
 | Skill | Description |
 |-------|-------------|
 | **api-design** | REST API design: resource naming, status codes, pagination, versioning |
-| **canvas-design** | Visual art and design in .png/.pdf |
 | **claude-api** | Claude API and Anthropic SDK reference |
+| **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) |
+| **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates |
 | **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) |
 | **deployment-patterns** | CI/CD pipelines, rolling/blue-green deployments, health checks, production readiness |
 | **django-patterns** | Django architecture, DRF, ORM best practices, caching, signals, middleware |
@@ -268,11 +286,10 @@ Key characteristics:
 | **frontend-design** | Production-grade frontend interfaces (Django templates) |
 | **mcp-builder** | Guide for creating MCP servers |
 | **pdf** | PDF reading, merging, splitting, OCR |
+| **playground** | Interactive HTML playgrounds: visual controls, live preview, prompt output |
 | **postgres-patterns** | PostgreSQL query optimization, schema design, indexing, RLS, connection pooling |
 | **pptx** | PowerPoint presentation creation |
 | **skill-creator** | Create and optimize new skills |
-| **slack-gif-creator** | Animated GIFs for Slack |
-| **theme-factory** | Theming toolkit for artifacts |
 | **webapp-testing** | Web app testing with Playwright |
 | **xlsx** | Spreadsheet creation and manipulation |
 
@@ -287,10 +304,15 @@ Skills are the recommended format because they support additional features (supp
 | Command | Description |
 |---------|-------------|
 | `/build-fix` | Incremental build/type error fixing with guardrails |
+| `/clean-gone` | Clean up stale local branches marked as [gone] and their worktrees |
+| `/code-review` | Multi-agent PR review with confidence scoring (0-100) and false positive filtering |
+| `/commit` | Stage and create a git commit with contextual message |
+| `/commit-push-pr` | One-command workflow: branch → commit → push → PR creation |
+| `/feature-dev` | Guided 7-phase feature development with codebase exploration and architecture design |
 | `/notebook-review` | Review Jupyter notebooks |
 | `/orchestrate` | Multi-agent workflow: planner → tdd → code-review → security |
-| `/review-pr` | Review an open pull request |
-| `/review-pr-ci` | Review a PR and post to GitHub (CI) |
+| `/review-pr` | Interactive PR review with formal GitHub decision (approve/request changes/comment) |
+| `/revise-claude-md` | Capture session learnings and update CLAUDE.md |
 | `/test-coverage` | Analyze coverage gaps, generate missing tests for 80%+ target |
 
 ### MCP Servers (`.mcp.json`)
