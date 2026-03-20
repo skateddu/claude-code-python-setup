@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-main.sh",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/auto-lint.sh",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  }
+}

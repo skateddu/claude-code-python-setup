@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "postgres-mcp",
+        "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-mydb}"
+      ]
+    },
+    "docker": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-docker"]
+    }
+  }
+}
