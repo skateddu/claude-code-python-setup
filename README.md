@@ -102,7 +102,8 @@ claude-code-python-setup/
 │   │   ├── python-idioms.md
 │   │   ├── security.md
 │   │   └── testing.md
-│   ├── settings.json          # Project-level hooks and permissions
+│   ├── settings.json          # Project-level hooks, permissions, status line
+│   ├── statusline.py          # Status line script (Python, cross-platform)
 │   └── skills/              # Reference docs and scripts
 │       ├── api-design/
 │       ├── claude-api/
@@ -368,17 +369,19 @@ The `.mcp.json` file in the project root defines which servers are available. Ea
 | **postgres** | PostgreSQL database interaction |
 | **docker** | Docker container management |
 
-## Tips
+### Status Line (`.claude/statusline.py`)
 
-### Status Line
+A persistent status bar at the bottom of Claude Code that displays session info at a glance. It's **pre-configured** in `.claude/settings.json` and works automatically — no setup needed.
 
-Configure a persistent status bar to monitor context usage, model, cost, and git branch during sessions:
+The status line shows three rows:
 
-```
-/statusline show model, context %, cost, git branch
-```
+| Row | Content |
+|-----|---------|
+| **1** | Model name, current directory, git branch with staged/modified counts (color-coded) |
+| **2** | Context window progress bar (green/yellow/red), context %, session cost, elapsed time |
+| **3** | Rate limit usage bars for 5-hour and 7-day windows (Pro/Max only, hidden until first API response) |
 
-This helps you know when context is getting full (and compaction is about to trigger) without having to check manually.
+The script is written in Python and works cross-platform: Windows, macOS, and Linux. Git operations are cached for 5 seconds to avoid lag on large repositories.
 
 > Full documentation: [code.claude.com/docs/en/statusline](https://code.claude.com/docs/en/statusline)
 
