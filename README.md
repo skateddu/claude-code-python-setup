@@ -260,6 +260,31 @@ Key characteristics:
 | **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
 | **protect-main** | `PreToolUse` (Bash) | Blocks `git push --force`, direct push to main/master, `git reset --hard`, broad `rm -rf` |
 
+### Permissions (`.claude/settings.json`)
+
+Pre-configured permission rules in `.claude/settings.json` control what Claude can and cannot access.
+
+**Allowed commands** — auto-approved without prompting:
+
+| Pattern | Description |
+|---------|-------------|
+| `uv sync *`, `uv add *`, `uv remove *` | Dependency management |
+| `uv run pytest *`, `uv run ruff *`, `uv run python *` | Test, lint, and run |
+
+**Denied reads** — Claude is blocked from reading sensitive files:
+
+| Pattern | Files protected |
+|---------|----------------|
+| `.env`, `.env.*`, `.envrc` | Environment variables |
+| `secrets/**` | Secrets directory |
+| `**/credentials*`, `**/secret*` | Credential and secret files |
+| `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/*.jks` | Certificates and private keys |
+| `**/*token*` | Token files |
+
+These rules are enforced at the system level — Claude cannot bypass them regardless of the prompt. Customize by editing the `permissions` object in `.claude/settings.json`.
+
+> Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
+
 ### Agents (`.claude/agents/`)
 
 Agents are **specialized AI subagents** that run in their own context window with a custom system prompt, specific tool access, and independent permissions. When Claude encounters a task that matches an agent's description, it **automatically delegates** to that agent, which works independently and returns results.
