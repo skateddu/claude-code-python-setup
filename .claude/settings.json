@@ -21,7 +21,12 @@
       "Read(./**/*.p12)",
       "Read(./**/*.pfx)",
       "Read(./**/*.jks)",
-      "Read(./**/*token*)"
+      "Read(./**/*token*)",
+      "Read(~/.ssh/**)",
+      "Read(./**/*id_rsa*)",
+      "Read(./**/*id_ed25519*)",
+      "Read(./**/*id_ecdsa*)",
+      "Read(./**/*id_dsa*)"
     ]
   },
   "statusLine": {

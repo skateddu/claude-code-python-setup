@@ -280,6 +280,7 @@ Pre-configured permission rules in `.claude/settings.json` control what Claude c
 | `**/credentials*`, `**/secret*` | Credential and secret files |
 | `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/*.jks` | Certificates and private keys |
 | `**/*token*` | Token files |
+| `~/.ssh/**`, `**/id_rsa*`, `**/id_ed25519*`, `**/id_ecdsa*`, `**/id_dsa*` | SSH keys |
 
 These rules are enforced at the system level — Claude cannot bypass them regardless of the prompt. Customize by editing the `permissions` object in `.claude/settings.json`.
 
