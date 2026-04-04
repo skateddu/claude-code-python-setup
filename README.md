@@ -190,6 +190,7 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `POSTGRES_*` | postgres MCP server | see `.env.example` | Database connection parameters |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | Claude Code | `95` | Context % threshold that triggers auto-compaction (lower = compacts earlier, reduces response time) |
 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: multiple Claude instances working in parallel with inter-agent communication ([docs](https://code.claude.com/docs/en/agent-teams)) |
+| `CLAUDE_CODE_NO_FLICKER` | Claude Code | `0` (disabled) | Set to `1` to enable fullscreen rendering: flicker-free display, flat memory usage in long conversations, and mouse support. Research preview, requires v2.1.89+ ([docs](https://code.claude.com/docs/en/fullscreen)) |
 
 ### 4. Verify MCP servers
 
@@ -275,7 +276,7 @@ Pre-configured permission rules in `.claude/settings.json` control what Claude c
 
 | Pattern | Files protected |
 |---------|----------------|
-| `.env`, `.env.*`, `.envrc` | Environment variables |
+| `.env`, `.env.{local,development,staging,production,test}`, `.envrc` | Environment variables (`.env.example` is allowed) |
 | `secrets/**` | Secrets directory |
 | `**/credentials*`, `**/secret*` | Credential and secret files |
 | `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/*.jks` | Certificates and private keys |
