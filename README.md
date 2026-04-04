@@ -392,12 +392,14 @@ The `.mcp.json` file in the project root defines which servers are available. Ea
 
 > Full documentation: [code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)
 
-| Server | Description |
-|--------|-------------|
-| **context7** | Up-to-date library documentation lookup |
-| **playwright** | Browser automation and testing |
-| **postgres** | PostgreSQL database interaction |
-| **docker** | Docker container management |
+| Server | Description | Recommended |
+|--------|-------------|-------------|
+| **context7** | Up-to-date library documentation lookup | Always |
+| **playwright** | Browser automation, testing, and web scraping | If testing web apps or scraping |
+| **postgres** | PostgreSQL database interaction | If using PostgreSQL |
+| **docker** | Docker container management | If using Docker |
+
+> **context7** is recommended for all projects — it gives Claude access to current library docs, reducing hallucinated APIs and outdated patterns. The other servers are situational: keep or remove them from `.mcp.json` based on your project's stack.
 
 ### Status Line (`.claude/statusline.py`)
 
