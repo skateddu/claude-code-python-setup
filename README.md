@@ -1,5 +1,11 @@
 # Claude Code Python Setup
 
+[![License: MIT](https://img.shields.io/github/license/skateddu/claude-code-python-setup)](LICENSE)
+[![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org/)
+[![GitHub stars](https://img.shields.io/github/stars/skateddu/claude-code-python-setup)](https://github.com/skateddu/claude-code-python-setup/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/skateddu/claude-code-python-setup)](https://github.com/skateddu/claude-code-python-setup/issues)
+[![GitHub last commit](https://img.shields.io/github/last-commit/skateddu/claude-code-python-setup)](https://github.com/skateddu/claude-code-python-setup/commits/main)
+
 A ready-to-use `.claude` configuration for Python development projects with Claude Code. Includes curated agents, commands, skills, and MCP server templates.
 
 ## Prerequisites
@@ -136,10 +142,14 @@ claude-code-python-setup/
 ├── .env.example             # Environment variables template
 ├── .gitignore
 ├── .python-version          # Python version pin for uv
+├── CHANGELOG.md             # Version history (Keep a Changelog format)
 ├── CLAUDE.md                # Project instructions (< 200 lines, imports rules)
+├── CODE_OF_CONDUCT.md       # Contributor Covenant 2.1
+├── CONTRIBUTING.md          # How to contribute, setup, PR workflow
 ├── LICENSE                  # MIT License
 ├── pyproject.toml           # Project metadata, ruff and pytest config
-└── README.md
+├── README.md
+└── SECURITY.md              # Vulnerability reporting policy
 ```
 
 ## Setup
