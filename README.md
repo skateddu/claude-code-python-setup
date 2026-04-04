@@ -53,8 +53,11 @@ Some components require additional tools. Install only what you need:
 | **Docker** | docker MCP server | [docker.com](https://www.docker.com/get-started/) |
 | **PostgreSQL** | postgres MCP server | Running instance (local or remote) |
 | **jq** | hooks (enforce-uv, protect-main, auto-lint) | [jqlang.github.io/jq](https://jqlang.github.io/jq/download/) |
+| **[RTK](https://github.com/rtk-ai/rtk)** | token optimization (recommended) | `brew install rtk` or [install guide](https://github.com/rtk-ai/rtk#installation) |
 
 > `npx` comes with Node.js. `uvx` comes with uv. No additional installs needed beyond the base tools.
+
+> **Token savings tip**: [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) is a CLI proxy that reduces token consumption by 60-90% on common dev commands (git, tests, build, lint). Run `rtk init -g` to install a hook that automatically optimizes all shell commands in Claude Code sessions.
 
 ## Project Structure
 
