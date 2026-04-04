@@ -1,10 +1,34 @@
 [project]
 name = "claude-code-python-setup"
-version = "1.0.0"
+version = "1.1.0"
 description = "Ready-to-use .claude configuration for Python projects with Claude Code"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
+authors = [
+    { name = "Andrea Cadeddu", email = "skateddu@users.noreply.github.com" },
+]
+keywords = ["claude", "claude-code", "python", "setup", "template", "ai", "anthropic"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/skateddu/claude-code-python-setup"
+Repository = "https://github.com/skateddu/claude-code-python-setup"
+Issues = "https://github.com/skateddu/claude-code-python-setup/issues"
+Changelog = "https://github.com/skateddu/claude-code-python-setup/blob/main/CHANGELOG.md"
 
 [tool.ruff]
 line-length = 99
