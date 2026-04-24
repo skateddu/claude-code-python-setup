@@ -14,7 +14,8 @@ Follow **GitHub Flow**: a single stable branch (`main`) with short-lived feature
 Never create branches, commits, or push autonomously. Always **propose** git operations to the user, who accepts or rejects.
 
 - If the working directory is not a git repository, propose `git init` with a `.gitignore` appropriate to the project stack
-- Before starting any non-trivial change (feat, fix, refactor, test), propose creating a dedicated branch from `main`
+- Before starting any non-trivial change (feat, fix, refactor, test), propose creating a dedicated branch from `main` — if already on a branch consistent with the change's scope, continue without proposing a new one
+- If the change is unrelated to the current branch's scope, propose creating a new branch from `main`
 - After completing a logical unit of work, propose a commit with a draft message
 - After one or more commits, propose push and PR creation when appropriate
 
