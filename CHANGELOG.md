@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-04-24
+
+### Added
+
+- **Git workflow rules** (`.claude/rules/git-workflow.md`): branching strategy (GitHub Flow) and proactive proposals — agent proposes `git init`, branch creation, commits, push, and PRs instead of acting autonomously; handles existing branch scope detection
+
+### Changed
+
+- **README.md**: simplified RTK install instructions
+
 ## [1.1.0] - 2026-04-04
 
 ### Added

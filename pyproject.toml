@@ -1,6 +1,6 @@
 [project]
 name = "claude-code-python-setup"
-version = "1.1.0"
+version = "1.2.0"
 description = "Ready-to-use .claude configuration for Python projects with Claude Code"
 readme = "README.md"
 license = "MIT"
