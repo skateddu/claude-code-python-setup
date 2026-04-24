@@ -1,5 +1,33 @@
 # Git Workflow
 
+## Branching Strategy
+
+Follow **GitHub Flow**: a single stable branch (`main`) with short-lived feature branches.
+
+- `main` is always deployable — never push broken code directly to it
+- Every non-trivial change goes through a dedicated branch and PR
+- Keep branches short-lived: merge or close within days, not weeks
+- Delete branches after merge
+
+## Proactive Proposals
+
+Never create branches, commits, or push autonomously. Always **propose** git operations to the user, who accepts or rejects.
+
+- If the working directory is not a git repository, propose `git init` with a `.gitignore` appropriate to the project stack
+- Before starting any non-trivial change (feat, fix, refactor, test), propose creating a dedicated branch from `main`
+- After completing a logical unit of work, propose a commit with a draft message
+- After one or more commits, propose push and PR creation when appropriate
+
+### Direct Commit on Main
+
+Skip the branch proposal only for minimal, low-risk changes:
+
+- Typo fixes in documentation or comments
+- Single-line config adjustments (e.g., version bump in `pyproject.toml`)
+- Updates to `CHANGELOG.md`, `README.md`, or other docs-only changes
+
+Even for these, still propose the commit — never commit silently.
+
 ## Commit Messages
 
 Use Conventional Commits format:
