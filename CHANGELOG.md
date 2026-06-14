@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Hooks** (`enforce-uv.sh`, `protect-main.sh`): migrate `PreToolUse` output from the deprecated top-level `decision`/`reason` fields to the current `hookSpecificOutput.permissionDecision`/`permissionDecisionReason` format
 - **Agents** (`pr-test-analyzer`, `silent-failure-hunter`, `type-design-analyzer`): replace hardcoded "Daisy" persona in `description` examples with a generic user reference
+- **README.md**: document the PEP 735 dependency groups (`uv sync` / `uv sync --group agents`) as a new setup step, and update the Hooks blocking example to the current `hookSpecificOutput.permissionDecision` format
 
 ### Fixed
 
