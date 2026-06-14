@@ -209,6 +209,21 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 
 Run `/mcp` inside Claude Code to check that all servers are connected.
 
+### 5. Install development tooling (optional)
+
+The `pyproject.toml` declares [PEP 735 dependency groups](https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups) for the tools this setup relies on:
+
+```bash
+# Core tooling (ruff, pytest, pytest-cov) — used by the auto-lint hook,
+# the enforce-uv hook, and the verification flow. Installed by default:
+uv sync
+
+# Agent tooling (mypy, bandit, pip-audit, safety, vulture, autoflake) —
+# only needed by on-demand agents (security-reviewer, refactor-cleaner,
+# code-reviewer). Opt in when required:
+uv sync --group agents
+```
+
 ## Components
 
 ### CLAUDE.md (project root)
@@ -262,7 +277,7 @@ Each hook is a shell script triggered by a specific event. `PreToolUse` hooks ca
 
 Key characteristics:
 - **Deterministic**: hooks always execute — they don't depend on Claude's interpretation
-- **Blocking**: `PreToolUse` hooks can return `{"decision":"block","reason":"..."}` to prevent an action
+- **Blocking**: `PreToolUse` hooks can return `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}` to prevent an action
 - **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
 - **Dependency**: requires `jq` for JSON parsing of hook input
 
