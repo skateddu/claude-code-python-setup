@@ -143,6 +143,7 @@ claude-code-python-setup/
 │   ├── linux_mac.mcp.json   # MCP server config (Linux/Mac)
 │   └── windows.mcp.json     # MCP server config (Windows)
 ├── .env.example             # Environment variables template
+├── .gitattributes           # Force *.sh to LF so hooks run on Windows
 ├── .gitignore
 ├── .python-version          # Python version pin for uv
 ├── CHANGELOG.md             # Version history (Keep a Changelog format)
