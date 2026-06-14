@@ -97,9 +97,12 @@ claude-code-python-setup/
 │   │   ├── revise-claude-md.md
 │   │   └── test-coverage.md
 │   ├── hooks/                # Deterministic guardrails
-│   │   ├── enforce-uv.sh     # Block bare pip/python/pytest, suggest uv
+│   │   ├── session-start.sh  # Check uv env (.venv, lockfile) at session start
+│   │   ├── guard-secrets.sh  # Block prompts containing hardcoded secrets
+│   │   ├── enforce-uv.sh     # Rewrite bare python/pytest to uv run, block pip
+│   │   ├── protect-main.sh   # Block force push, direct push to main, broad rm -rf
 │   │   ├── auto-lint.sh      # Auto-format Python files with ruff after edits
-│   │   └── protect-main.sh   # Block force push, direct push to main, broad rm -rf
+│   │   └── verify.sh         # Run ruff + pytest on Stop; block until green
 │   ├── rules/               # Modular coding standards
 │   │   ├── api-patterns.md  # FastAPI/Pydantic (path-scoped)
 │   │   ├── architecture.md
@@ -281,15 +284,18 @@ Key characteristics:
 - **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
 - **Dependency**: requires `jq` for JSON parsing of hook input
 
-This setup uses only `PreToolUse` and `PostToolUse`, but Claude Code exposes many more events you can hook into — among them `SessionStart`/`SessionEnd`, `UserPromptSubmit`, `Stop`/`SubagentStop`, `PreCompact`/`PostCompact`, and `Notification`. See the docs for the full list.
+This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes many more events — among them `SessionEnd`, `SubagentStop`, `PreCompact`/`PostCompact`, and `Notification`. See the docs for the full list.
 
 > Full documentation: [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
 
 | Hook | Event | Description |
 |------|-------|-------------|
-| **enforce-uv** | `PreToolUse` (Bash) | Blocks bare `pip`, `python`, `pytest`, `ruff`, `mypy`, `bandit` — suggests `uv run` or `uv add` equivalents |
-| **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
+| **session-start** | `SessionStart` | Checks the uv environment (`.venv`, `uv.lock` freshness) and injects the status into the session context |
+| **guard-secrets** | `UserPromptSubmit` | Blocks a prompt that looks like it contains a hardcoded secret (API keys, tokens, private keys) |
+| **enforce-uv** | `PreToolUse` (Bash) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`; blocks `pip` and ambiguous cases with `uv add`/`uv sync` guidance |
 | **protect-main** | `PreToolUse` (Bash) | Blocks `git push --force`, direct push to main/master, `git reset --hard`, broad `rm -rf` |
+| **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
+| **verify** | `Stop` | Runs `ruff check` + `pytest` when Claude finishes; on failure, blocks the stop and feeds the errors back so Claude keeps fixing |
 
 ### Permissions (`.claude/settings.json`)
 

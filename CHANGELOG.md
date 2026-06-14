@@ -10,11 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **pyproject.toml**: `[dependency-groups]` (PEP 735) — `dev` group (`ruff`, `pytest`, `pytest-cov`) installed by default with `uv sync`, plus an opt-in `agents` group (`mypy`, `bandit`, `pip-audit`, `safety`, `vulture`, `autoflake`) for tooling invoked only by on-demand agents (`uv sync --group agents`)
 - **Settings** (`.claude/settings.json`): `fallbackModel` chain (`claude-sonnet-4-6`, `claude-haiku-4-5`) so sessions continue on a backup model when the primary is overloaded or unavailable
+- **Hooks** (`verify.sh`): `Stop` hook that runs `ruff check` + `pytest` when Claude finishes a turn and, on failure, blocks the stop and feeds the errors back so Claude keeps fixing until the project is green (loop-guarded via `stop_hook_active`)
+- **Hooks** (`guard-secrets.sh`): `UserPromptSubmit` hook that blocks prompts containing a hardcoded secret (AWS/GitHub/Google/Slack/Anthropic/OpenAI keys, PEM private keys), complementing the file-level `deny` read rules
+- **Hooks** (`session-start.sh`): `SessionStart` hook that checks the uv environment (`.venv` presence, `uv.lock` freshness) and injects the status into the session context
+- **.gitattributes**: force `*.sh` to LF so the shell hooks stay runnable on Windows checkouts (`core.autocrlf`)
 
 ### Changed
 
 - **Hooks** (`enforce-uv.sh`, `protect-main.sh`): migrate `PreToolUse` output from the deprecated top-level `decision`/`reason` fields to the current `hookSpecificOutput.permissionDecision`/`permissionDecisionReason` format
 - **Agents** (`pr-test-analyzer`, `silent-failure-hunter`, `type-design-analyzer`): replace hardcoded "Daisy" persona in `description` examples with a generic user reference
+- **Hooks** (`enforce-uv.sh`): auto-rewrite a simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` invocation to `uv run ...` via `updatedInput` (PreToolUse `allow`) instead of blocking it; `pip` and compound commands still deny with guidance
 - **README.md**: document the PEP 735 dependency groups (`uv sync` / `uv sync --group agents`) as a new setup step, and update the Hooks blocking example to the current `hookSpecificOutput.permissionDecision` format
 - **README.md**: sync with recent Claude Code releases — correct the Agents section (subagents can now nest up to 5 levels deep), document the full `permissionDecision` set (`deny`/`allow`/`ask`/`defer`) plus `updatedInput`, list additional available hook events, and document the new `fallbackModel` setting
 
