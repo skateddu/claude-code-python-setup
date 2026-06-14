@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Hooks** (`enforce-uv.sh`): auto-rewrite a simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` invocation to `uv run ...` via `updatedInput` (PreToolUse `allow`) instead of blocking it; `pip` and compound commands still deny with guidance
 - **README.md**: document the PEP 735 dependency groups (`uv sync` / `uv sync --group agents`) as a new setup step, and update the Hooks blocking example to the current `hookSpecificOutput.permissionDecision` format
 - **README.md**: sync with recent Claude Code releases — correct the Agents section (subagents can now nest up to 5 levels deep), document the full `permissionDecision` set (`deny`/`allow`/`ask`/`defer`) plus `updatedInput`, list additional available hook events, and document the new `fallbackModel` setting
+- **README.md**: add `.gitattributes` to the project structure tree
+- **CLAUDE.md**: clarify the dependency commands — `uv sync` installs the default `dev` group only; add `uv sync --group agents` for the opt-in agent tooling
 
 ### Fixed
 

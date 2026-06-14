@@ -56,7 +56,8 @@ Use each tool per its design intent. Don't force workarounds.
 
 ```bash
 # Dependencies
-uv sync                             # Install/sync all dependencies
+uv sync                             # Install/sync default deps (dev group)
+uv sync --group agents              # Also install agent tooling (mypy, bandit, ...)
 uv add <package>                    # Add a dependency
 uv add --dev <package>              # Add a dev dependency
 uv remove <package>                 # Remove a dependency
