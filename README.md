@@ -277,9 +277,11 @@ Each hook is a shell script triggered by a specific event. `PreToolUse` hooks ca
 
 Key characteristics:
 - **Deterministic**: hooks always execute — they don't depend on Claude's interpretation
-- **Blocking**: `PreToolUse` hooks can return `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}` to prevent an action
+- **Blocking**: `PreToolUse` hooks return a `hookSpecificOutput` object whose `permissionDecision` is one of `deny` (block), `allow` (auto-approve), `ask` (escalate to the user), or `defer` (fall back to the normal permission flow); they can also rewrite the tool call via `updatedInput`. Example: `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}`
 - **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
 - **Dependency**: requires `jq` for JSON parsing of hook input
+
+This setup uses only `PreToolUse` and `PostToolUse`, but Claude Code exposes many more events you can hook into — among them `SessionStart`/`SessionEnd`, `UserPromptSubmit`, `Stop`/`SubagentStop`, `PreCompact`/`PostCompact`, and `Notification`. See the docs for the full list.
 
 > Full documentation: [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
 
@@ -315,6 +317,10 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 > Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
 
+**Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-4-6", "claude-haiku-4-5"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
+
+> Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
+
 ### Agents (`.claude/agents/`)
 
 Agents are **specialized AI subagents** that run in their own context window with a custom system prompt, specific tool access, and independent permissions. When Claude encounters a task that matches an agent's description, it **automatically delegates** to that agent, which works independently and returns results.
@@ -325,7 +331,7 @@ Key characteristics:
 - **Automatic delegation**: Claude uses the agent's `description` to decide when to delegate
 - **Isolated context**: each agent runs in its own context window, keeping verbose output out of the main conversation
 - **Configurable tools and model**: agents can restrict tool access and use a different model (e.g., Haiku for speed)
-- **Cannot nest**: subagents cannot spawn other subagents
+- **Nesting**: subagents can spawn their own subagents (up to 5 levels deep)
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
 
