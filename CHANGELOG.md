@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Settings** (`.claude/settings.json`): `fallbackModel` refreshed from the stale `claude-sonnet-4-6`/`claude-haiku-4-5` IDs to the current `claude-sonnet-5`/`claude-haiku-4-5-20251001`
+- **Hooks** (`enforce-uv.sh`, `protect-main.sh`): added `if` conditions to their `PreToolUse` entries so they only spawn on matching Bash commands (Python/pip tooling, git/rm) instead of every Bash call
+- **README.md**: synced the `fallbackModel` example; documented the hook `if` conditional field; updated `CLAUDE_CODE_NO_FLICKER` (fullscreen rendering is now default-on, no longer a research preview) and `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` (implicit team model replaces `TeamCreate`/`TeamDelete`); noted subagents now run in the background by default; bumped the RTK reference to v0.43.0 and mentioned `rtk gain`
+- **.env.example**: `CLAUDE_CODE_NO_FLICKER` default flipped to `1` to match the new Claude Code default
+
 ## [1.3.0] - 2026-06-14
 
 ### Added

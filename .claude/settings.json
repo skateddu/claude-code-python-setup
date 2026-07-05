@@ -68,12 +68,14 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/enforce-uv.sh",
-            "timeout": 10000
+            "timeout": 10000,
+            "if": "Bash(python *)|Bash(python3 *)|Bash(pytest *)|Bash(ruff *)|Bash(mypy *)|Bash(bandit *)|Bash(pip *)|Bash(pip3 *)"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/protect-main.sh",
-            "timeout": 10000
+            "timeout": 10000,
+            "if": "Bash(git *)|Bash(rm *)"
           }
         ]
       }
