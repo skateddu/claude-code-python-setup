@@ -324,7 +324,7 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 > Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
 
-**Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-4-6", "claude-haiku-4-5"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
+**Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-5", "claude-haiku-4-5-20251001"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
 
 > Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
 
