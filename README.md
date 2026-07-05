@@ -15,6 +15,7 @@ A ready-to-use `.claude` configuration for Python development projects with Clau
 Claude Code requires a **Pro, Max, Teams, Enterprise, or Console** account (the free Claude.ai plan does not include Claude Code access).
 
 **System requirements:**
+
 - macOS 13.0+ / Windows 10 1809+ / Ubuntu 20.04+ / Debian 10+
 - 4 GB+ RAM
 - Internet connection
@@ -63,7 +64,7 @@ Some components require additional tools. Install only what you need:
 
 > `npx` comes with Node.js. `uvx` comes with uv. No additional installs needed beyond the base tools.
 
-> **Token savings tip**: [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) is a CLI proxy that reduces token consumption by 60-90% on common dev commands (git, tests, build, lint). Run `rtk init -g` to install a hook that automatically optimizes all shell commands in Claude Code sessions.
+> **Token savings tip**: [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) (v0.43.0+) is a CLI proxy that reduces token consumption by 60-90% on common dev commands (git, tests, build, lint). Run `rtk init -g` to install a hook that automatically optimizes all shell commands in Claude Code sessions, then `rtk gain` to see per-command and session token savings.
 
 ## Project Structure
 
@@ -206,8 +207,8 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 |----------|---------|---------|-------------|
 | `POSTGRES_*` | postgres MCP server | see `.env.example` | Database connection parameters |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | Claude Code | `95` | Context % threshold that triggers auto-compaction (lower = compacts earlier, reduces response time) |
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: multiple Claude instances working in parallel with inter-agent communication ([docs](https://code.claude.com/docs/en/agent-teams)) |
-| `CLAUDE_CODE_NO_FLICKER` | Claude Code | `0` (disabled) | Set to `1` to enable fullscreen rendering: flicker-free display, flat memory usage in long conversations, and mouse support. Research preview, requires v2.1.89+ ([docs](https://code.claude.com/docs/en/fullscreen)) |
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: spawning a teammate via the Agent tool's `name` parameter implicitly forms a team for the session (no `TeamCreate`/`TeamDelete` setup needed) ([docs](https://code.claude.com/docs/en/agent-teams)) |
+| `CLAUDE_CODE_NO_FLICKER` | Claude Code | `1` (enabled) | Fullscreen rendering (flicker-free display, flat memory usage, mouse support) is now the default; set to `0` to opt back into the classic renderer, or use `"tui": "fullscreen"` in `settings.json` ([docs](https://code.claude.com/docs/en/fullscreen)) |
 
 ### 4. Verify MCP servers
 
@@ -237,6 +238,7 @@ uv sync --group agents
 Think of it as a persistent system prompt scoped to your codebase. It's always loaded — no manual invocation needed.
 
 Key characteristics:
+
 - **Auto-loaded**: Claude reads it at startup, before any user message
 - **Imports via `@path`**: use `@.claude/rules/testing.md` to pull in modular rules without bloating the main file
 - **Keep under 200 lines**: long files waste context; extract details into rules
@@ -253,6 +255,7 @@ Rules are **modular coding standards** that extend `CLAUDE.md` without inflating
 Rules are loaded into Claude's context at session start alongside `CLAUDE.md`, so they act as persistent instructions — not invoked on demand like skills or agents.
 
 Key characteristics:
+
 - **Always in context**: rules are loaded at startup and apply to every interaction
 - **Path-scoped** (optional): add `paths` in YAML frontmatter to activate a rule only for matching file patterns (e.g., `api-patterns.md` only for `src/api/**/*.py`)
 - **One topic per file**: keeps each rule focused and easy to update independently
@@ -280,9 +283,11 @@ Hooks are **deterministic guardrails** that run automatically before or after Cl
 Each hook is a shell script triggered by a specific event. `PreToolUse` hooks can block an action before it happens; `PostToolUse` hooks run after a tool completes (e.g., to auto-format code). Hook configuration lives in `.claude/settings.json`.
 
 Key characteristics:
+
 - **Deterministic**: hooks always execute — they don't depend on Claude's interpretation
 - **Blocking**: `PreToolUse` hooks return a `hookSpecificOutput` object whose `permissionDecision` is one of `deny` (block), `allow` (auto-approve), `ask` (escalate to the user), or `defer` (fall back to the normal permission flow); they can also rewrite the tool call via `updatedInput`. Example: `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}`
 - **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
+- **Conditional**: an `if` field (permission-rule syntax, e.g. `Bash(git *)`) scopes a hook to matching commands so it doesn't spawn a process on every tool call — `enforce-uv` and `protect-main` use this to skip non-Python/non-git commands
 - **Dependency**: requires `jq` for JSON parsing of hook input
 
 This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes many more events — among them `SessionEnd`, `SubagentStop`, `PreCompact`/`PostCompact`, and `Notification`. See the docs for the full list.
@@ -312,7 +317,7 @@ Pre-configured permission rules in `.claude/settings.json` control what Claude c
 **Denied reads** — Claude is blocked from reading sensitive files:
 
 | Pattern | Files protected |
-|---------|----------------|
+|---------|-----------------|
 | `.env`, `.env.{local,development,staging,production,test}`, `.envrc` | Environment variables (`.env.example` is allowed) |
 | `secrets/**` | Secrets directory |
 | `**/credentials*`, `**/secret*` | Credential and secret files |
@@ -335,10 +340,12 @@ Agents are **specialized AI subagents** that run in their own context window wit
 Each agent is a Markdown file with YAML frontmatter (configuration) and a body (system prompt). Agents help preserve the main conversation context by isolating heavy tasks, and can enforce constraints like read-only access or specific tool sets.
 
 Key characteristics:
+
 - **Automatic delegation**: Claude uses the agent's `description` to decide when to delegate
 - **Isolated context**: each agent runs in its own context window, keeping verbose output out of the main conversation
 - **Configurable tools and model**: agents can restrict tool access and use a different model (e.g., Haiku for speed)
 - **Nesting**: subagents can spawn their own subagents (up to 5 levels deep)
+- **Background by default**: subagents now run in the background while you keep working, and notify on completion or when they need input
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
 
@@ -363,10 +370,12 @@ Key characteristics:
 Skills **extend what Claude can do**. Each skill is a directory containing a `SKILL.md` file (with optional supporting files like templates, examples, or scripts). Claude loads skills automatically when relevant to the conversation, or you can invoke them directly with `/skill-name`.
 
 Skills serve two purposes:
+
 - **Reference content**: conventions, patterns, domain knowledge that Claude applies to your work (loaded inline)
 - **Task content**: step-by-step workflows for specific actions like deployments or code generation
 
 Key characteristics:
+
 - **Auto-discovery**: Claude reads skill descriptions and loads them when relevant
 - **Invocation control**: `disable-model-invocation: true` makes a skill user-only; `user-invocable: false` makes it Claude-only
 - **Arguments**: skills accept `$ARGUMENTS` from the user (e.g., `/fix-issue 123`)
