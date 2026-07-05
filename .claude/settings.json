@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "fallbackModel": ["claude-sonnet-4-6", "claude-haiku-4-5"],
+  "fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5-20251001"],
   "permissions": {
     "allow": [
       "Bash(uv sync *)",
