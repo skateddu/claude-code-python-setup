@@ -33,7 +33,9 @@ if echo "$command" | grep -qE 'git\s+reset\s+--hard'; then
     deny "git reset --hard discards changes permanently. Consider \`git stash\` or \`git reset --soft\` instead."
 fi
 
-# Block broad rm -rf (root, home, current dir, parent dir)
-if echo "$command" | grep -qE 'rm\s+-r?f?r?\s+(/\s|/\b|\.\s|\.\b|\.\.\s|\.\.\b|~/|~\b)'; then
+# Block broad rm -rf (root, home, current dir, parent dir). The target must be
+# followed by whitespace or end-of-string so it matches the whole token, not a
+# prefix (e.g. this must not match `rm -rf .git` or `rm -rf ~/tmp-dir`).
+if echo "$command" | grep -qE 'rm\s+-r?f?r?\s+(\.\.|\.|~/|~|/)($|\s)'; then
     deny "Broad rm -rf is blocked. Be specific about what to delete (e.g., rm -rf node_modules/)."
 fi
