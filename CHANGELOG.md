@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Hooks** (`protect-main.sh`): the broad `rm -rf` guard used `\b` (word-boundary) to close each dangerous target (`/`, `.`, `..`, `~`), which doesn't behave as a token boundary — it matches on any adjacent word character and doesn't match at all at end-of-string. Result: the guard silently let through the most common forms of the command (`rm -rf .`, `rm -rf ..`, `rm -rf /`, `rm -rf ~`, with no trailing space), while also incorrectly blocking legitimate specific targets like `rm -rf .git` or `rm -rf ~/tmp-dir`. Replaced the closing boundary with `($|\s)` so it matches the whole token instead. Verified against both dangerous and legitimate cases by invoking the hook directly with crafted input
+
 - **Settings** (`.claude/settings.json`): the `enforce-uv.sh`/`protect-main.sh` `PreToolUse` entries combined multiple patterns in one `if` string (e.g. `Bash(python *)|Bash(pytest *)|...`); the `if` field holds exactly one permission rule with no `||`/list syntax, so the condition never matched and both hooks silently stopped firing — including `protect-main.sh`'s guardrails against force-push, direct push to main, `git reset --hard`, and broad `rm -rf`. Split each pattern into its own hook handler entry (8 for `enforce-uv.sh`, 2 for `protect-main.sh`), per [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
 
 ### Changed
