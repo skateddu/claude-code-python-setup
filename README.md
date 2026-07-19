@@ -209,6 +209,7 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | Claude Code | `95` | Context % threshold that triggers auto-compaction (lower = compacts earlier, reduces response time) |
 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: spawning a teammate via the Agent tool's `name` parameter implicitly forms a team for the session (no `TeamCreate`/`TeamDelete` setup needed) ([docs](https://code.claude.com/docs/en/agent-teams)) |
 | `CLAUDE_CODE_NO_FLICKER` | Claude Code | `1` (enabled) | Fullscreen rendering (flicker-free display, flat memory usage, mouse support) is now the default; set to `0` to opt back into the classic renderer, or use `"tui": "fullscreen"` in `settings.json` ([docs](https://code.claude.com/docs/en/fullscreen)) |
+| `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` | Claude Code | `0` (enabled) | Set to `1` to hide the skills and workflows bundled with Claude Code itself (e.g. `/init`, `/security-review`); plugin skills and this project's own `.claude/skills/` are unaffected. Equivalent to `"disableBundledSkills": true` in `settings.json` ([docs](https://code.claude.com/docs/en/settings)) |
 
 ### 4. Verify MCP servers
 
@@ -330,6 +331,13 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 > Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
 
 **Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-5", "claude-haiku-4-5-20251001"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
+
+**Default permission mode** — `permissions.defaultMode` is set explicitly to `"default"` (prompt on first use of each tool) so the behavior is visible and easy to change, rather than relying on the implicit default. Other values: `"plan"` (read-only, no modifications), `"acceptEdits"` (auto-accepts file edits), `"bypassPermissions"` (skips all prompts — isolated environments only), `"dontAsk"` (auto-denies unless pre-approved), `"auto"` (auto-approves with background safety checks).
+
+Two related settings are intentionally **not** set here, since they have no neutral value that preserves default behavior while being explicit — adding them would itself be a behavior change:
+
+- `permissions.disableAutoMode: "disable"` — permanently removes `auto` from the `Shift+Tab` mode cycle; there's no value that means "keep auto mode available" other than omitting the key.
+- `language: "italian"` (or any language name) — pins Claude's response language, voice dictation, and terminal tab title generation to that language; omitting it lets Claude follow the conversation's language.
 
 > Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
 

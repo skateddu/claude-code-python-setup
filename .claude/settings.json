@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5-20251001"],
   "permissions": {
+    "defaultMode": "default",
     "allow": [
       "Bash(uv sync *)",
       "Bash(uv run pytest *)",
@@ -69,13 +70,61 @@
             "type": "command",
             "command": "bash .claude/hooks/enforce-uv.sh",
             "timeout": 10000,
-            "if": "Bash(python *)|Bash(python3 *)|Bash(pytest *)|Bash(ruff *)|Bash(mypy *)|Bash(bandit *)|Bash(pip *)|Bash(pip3 *)"
+            "if": "Bash(python *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(python3 *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(pytest *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(ruff *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(mypy *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(bandit *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(pip *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "Bash(pip3 *)"
           },
           {
             "type": "command",
             "command": "bash .claude/hooks/protect-main.sh",
             "timeout": 10000,
-            "if": "Bash(git *)|Bash(rm *)"
+            "if": "Bash(git *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-main.sh",
+            "timeout": 10000,
+            "if": "Bash(rm *)"
           }
         ]
       }

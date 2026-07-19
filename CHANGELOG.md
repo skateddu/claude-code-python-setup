@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Settings** (`.claude/settings.json`): the `enforce-uv.sh`/`protect-main.sh` `PreToolUse` entries combined multiple patterns in one `if` string (e.g. `Bash(python *)|Bash(pytest *)|...`); the `if` field holds exactly one permission rule with no `||`/list syntax, so the condition never matched and both hooks silently stopped firing — including `protect-main.sh`'s guardrails against force-push, direct push to main, `git reset --hard`, and broad `rm -rf`. Split each pattern into its own hook handler entry (8 for `enforce-uv.sh`, 2 for `protect-main.sh`), per [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
+
 ### Changed
 
+- **Settings** (`.claude/settings.json`): added `permissions.defaultMode: "default"` explicitly — same behavior as the implicit default, but now visible and easy to customize
+- **.env.example**: added `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS="0"` (explicit default; set to `1` to hide Claude Code's own bundled skills/workflows, project `.claude/skills/` is unaffected)
+- **README.md**: documented `permissions.defaultMode`, and noted `permissions.disableAutoMode`/`language` as available but intentionally unset (both lack a neutral value that preserves default behavior)
 - **Settings** (`.claude/settings.json`): `fallbackModel` refreshed from the stale `claude-sonnet-4-6`/`claude-haiku-4-5` IDs to the current `claude-sonnet-5`/`claude-haiku-4-5-20251001`
 - **Hooks** (`enforce-uv.sh`, `protect-main.sh`): added `if` conditions to their `PreToolUse` entries so they only spawn on matching Bash commands (Python/pip tooling, git/rm) instead of every Bash call
 - **README.md**: synced the `fallbackModel` example; documented the hook `if` conditional field; updated `CLAUDE_CODE_NO_FLICKER` (fullscreen rendering is now default-on, no longer a research preview) and `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` (implicit team model replaces `TeamCreate`/`TeamDelete`); noted subagents now run in the background by default; bumped the RTK reference to v0.43.0 and mentioned `rtk gain`
