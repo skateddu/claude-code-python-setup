@@ -88,7 +88,6 @@ claude-code-python-setup/
 │   ├── commands/            # Slash commands (/command-name)
 │   │   ├── build-fix.md
 │   │   ├── clean-gone.md
-│   │   ├── code-review.md
 │   │   ├── commit.md
 │   │   ├── commit-push-pr.md
 │   │   ├── feature-dev.md
@@ -291,7 +290,16 @@ Key characteristics:
 - **Conditional**: an `if` field (permission-rule syntax, e.g. `Bash(git *)`) scopes a hook to matching commands so it doesn't spawn a process on every tool call — `enforce-uv` and `protect-main` use this to skip non-Python/non-git commands
 - **Dependency**: requires `jq` for JSON parsing of hook input
 
-This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes many more events — among them `SessionEnd`, `SubagentStop`, `PreCompact`/`PostCompact`, and `Notification`. See the docs for the full list.
+This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes **32 events** in total. Among the ones most useful to extend this setup:
+
+- `PostToolBatch` — after a whole batch of parallel tool calls resolves (run linting once per batch instead of once per file)
+- `PostToolUseFailure` — after a tool call fails, for reacting to errors rather than successes
+- `SubagentStart` / `SubagentStop` — around each subagent's lifecycle
+- `InstructionsLoaded` — when a `CLAUDE.md` or `.claude/rules/*.md` file is loaded into context
+- `PermissionRequest` / `PermissionDenied` — when a call needs a permission decision, or auto mode denies it
+- `SessionEnd`, `PreCompact` / `PostCompact`, `Notification`, `ConfigChange`, `FileChanged`
+
+See the docs for the full list.
 
 > Full documentation: [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
 
@@ -334,6 +342,8 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 **Default permission mode** — `permissions.defaultMode` is set explicitly to `"default"` (prompt on first use of each tool) so the behavior is visible and easy to change, rather than relying on the implicit default. Other values: `"plan"` (read-only, no modifications), `"acceptEdits"` (auto-accepts file edits), `"bypassPermissions"` (skips all prompts — isolated environments only), `"dontAsk"` (auto-denies unless pre-approved), `"auto"` (auto-approves with background safety checks).
 
+> Since Claude Code v2.1.200 the `default` mode is **labeled "Manual"** in the CLI, the VS Code and JetBrains extensions, and the desktop app — look for "Manual", not "default", in the `Shift+Tab` mode cycle. The `"default"` value stays canonical and needs no migration; `"manual"` is accepted as an alias.
+
 Two related settings are intentionally **not** set here, since they have no neutral value that preserves default behavior while being explicit — adding them would itself be a behavior change:
 
 - `permissions.disableAutoMode: "disable"` — permanently removes `auto` from the `Shift+Tab` mode cycle; there's no value that means "keep auto mode available" other than omitting the key.
@@ -352,7 +362,7 @@ Key characteristics:
 - **Automatic delegation**: Claude uses the agent's `description` to decide when to delegate
 - **Isolated context**: each agent runs in its own context window, keeping verbose output out of the main conversation
 - **Configurable tools and model**: agents can restrict tool access and use a different model (e.g., Haiku for speed)
-- **Nesting**: subagents can spawn their own subagents (up to 5 levels deep)
+- **Nesting**: subagents can spawn their own subagents, up to 3 layers below the main conversation by default; at the limit Claude Code withholds the `Agent` tool so the subagent does the work itself. Change the limit with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
 - **Background by default**: subagents now run in the background while you keep working, and notify on completion or when they need input
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
@@ -429,12 +439,11 @@ Skills are the recommended format because they support additional features (supp
 |---------|-------------|
 | `/build-fix` | Incremental build/type error fixing with guardrails |
 | `/clean-gone` | Clean up stale local branches marked as [gone] and their worktrees |
-| `/code-review` | Multi-agent PR review with confidence scoring (0-100) and false positive filtering |
 | `/commit` | Stage and create a git commit with contextual message |
 | `/commit-push-pr` | One-command workflow: branch → commit → push → PR creation |
 | `/feature-dev` | Guided 7-phase feature development with codebase exploration and architecture design |
 | `/notebook-review` | Review Jupyter notebooks |
-| `/orchestrate` | Multi-agent workflow: planner → tdd → code-review → security |
+| `/orchestrate` | Multi-agent workflow: planner → tdd-guide → code-reviewer → security-reviewer |
 | `/review-pr` | Interactive PR review with formal GitHub decision (approve/request changes/comment) |
 | `/revise-claude-md` | Capture session learnings and update CLAUDE.md |
 | `/test-coverage` | Analyze coverage gaps, generate missing tests for 80%+ target |
