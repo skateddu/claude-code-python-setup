@@ -214,6 +214,8 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `BASH_MAX_OUTPUT_LENGTH` | Claude Code | `30000` (max `150000`) | Characters of command output Claude reads back. Raise it when verbose `pytest -v` output gets truncated before the failure summary |
 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | Claude Code | `3` | How many layers of subagents can nest below the main conversation. Set `1` to turn nesting off ([docs](https://code.claude.com/docs/en/sub-agents)) |
 | `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | Claude Code | `20` | How many subagents may run at once before `Agent` spawns start failing. Requires Claude Code v2.1.217+ ([docs](https://code.claude.com/docs/en/sub-agents)) |
+| `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` | Claude Code | `200` | WebSearch calls allowed per session, counted across the main conversation **and every subagent**, so parallel research fan-outs draw on the same budget. Accepts a positive whole number — the cap can be raised but not turned off; `/clear` resets the count. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/tools-reference)) |
+| `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | Claude Code | `120000` (2 min) | How long a main-conversation MCP tool call may run before it moves to a background task instead of blocking the session. Set `0` to disable auto-backgrounding. Calls from subagents are never backgrounded. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/mcp)) |
 
 ### 4. Verify MCP servers
 
