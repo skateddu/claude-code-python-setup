@@ -402,10 +402,12 @@ Key characteristics:
 
 > Full documentation: [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills)
 
+Ten of the skills below are **vendored from [anthropics/skills](https://github.com/anthropics/skills)** rather than written for this template: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx`. They are copies, so they don't update themselves — re-sync them from upstream periodically, especially `claude-api`, which pins the model IDs Claude will reach for. Last synced from upstream `f17010c` (2026-08-13).
+
 | Skill | Description |
 |-------|-------------|
 | **api-design** | REST API design: resource naming, status codes, pagination, versioning |
-| **claude-api** | Claude API and Anthropic SDK reference |
+| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration |
 | **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) |
 | **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates |
 | **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) |
@@ -416,14 +418,14 @@ Key characteristics:
 | **django-verification** | Django pre-deployment verification: migrations, tests, security scans |
 | **doc-coauthoring** | Structured documentation co-authoring workflow |
 | **docker-patterns** | Docker/Compose: multi-container orchestration, networking, security hardening |
-| **docx** | Word document creation and manipulation |
-| **frontend-design** | Production-grade frontend interfaces (Django templates) |
+| **docx** | Word document and `.dotx` template creation and manipulation |
+| **frontend-design** | Visual design direction for new or reshaped UI: aesthetics, typography, avoiding templated defaults |
 | **mcp-builder** | Guide for creating MCP servers |
 | **pdf** | PDF reading, merging, splitting, OCR |
 | **playground** | Interactive HTML playgrounds: visual controls, live preview, prompt output |
 | **postgres-patterns** | PostgreSQL query optimization, schema design, indexing, RLS, connection pooling |
-| **pptx** | PowerPoint presentation creation |
-| **skill-creator** | Create and optimize new skills |
+| **pptx** | PowerPoint presentation and `.potx` template creation |
+| **skill-creator** | Create and optimize skills, run evals, benchmark triggering accuracy |
 | **webapp-testing** | Web app testing with Playwright |
 | **xlsx** | Spreadsheet creation and manipulation |
 
