@@ -6,14 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Commands** (`.claude/commands/code-review.md`): deleted. `/code-review` became a built-in Claude Code command (v2.1.218 runs it as a background subagent, v2.1.223 made `/review` its alias and added reusable effort levels such as `/code-review high`), and a project command of the same name shadows it — the built-in was missing from the session's skill list until the file was removed. The built-in supersedes this copy: it does the same multi-agent diff review and adds effort levels, `--fix`, `--comment`, and `/code-review ultra` for a cloud review. The `code-reviewer` agent and `/review-pr` (which drives it for a formal GitHub review decision) are unaffected
+
 ### Fixed
 
 - **Hooks** (`protect-main.sh`): the broad `rm -rf` guard used `\b` (word-boundary) to close each dangerous target (`/`, `.`, `..`, `~`), which doesn't behave as a token boundary — it matches on any adjacent word character and doesn't match at all at end-of-string. Result: the guard silently let through the most common forms of the command (`rm -rf .`, `rm -rf ..`, `rm -rf /`, `rm -rf ~`, with no trailing space), while also incorrectly blocking legitimate specific targets like `rm -rf .git` or `rm -rf ~/tmp-dir`. Replaced the closing boundary with `($|\s)` so it matches the whole token instead. Verified against both dangerous and legitimate cases by invoking the hook directly with crafted input
 
 - **Settings** (`.claude/settings.json`): the `enforce-uv.sh`/`protect-main.sh` `PreToolUse` entries combined multiple patterns in one `if` string (e.g. `Bash(python *)|Bash(pytest *)|...`); the `if` field holds exactly one permission rule with no `||`/list syntax, so the condition never matched and both hooks silently stopped firing — including `protect-main.sh`'s guardrails against force-push, direct push to main, `git reset --hard`, and broad `rm -rf`. Split each pattern into its own hook handler entry (8 for `enforce-uv.sh`, 2 for `protect-main.sh`), per [code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)
 
+- **README.md**: the subagents section claimed nesting goes "up to 5 levels deep". The real default is **3 layers** below the main conversation (raised from 1 in Claude Code v2.1.219); at the limit Claude Code withholds the `Agent` tool so the subagent does the work itself. Documented `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` as the way to change it
+
+- **README.md**: the `/orchestrate` row named the pipeline stages `planner → tdd → code-review → security`, which don't match any agent names. Corrected to the actual agents the command drives: `planner → tdd-guide → code-reviewer → security-reviewer`
+
 ### Changed
 
+- **README.md**: noted that Claude Code v2.1.200 renamed the `default` permission mode's **label** to "Manual" across the CLI, the VS Code and JetBrains extensions, and the desktop app, and accepts `"manual"` as an alias. The `"default"` value in `.claude/settings.json` stays canonical, so nothing needed migrating — but readers looking for "default" in the `Shift+Tab` cycle wouldn't find it
+- **README.md**: replaced the short "many more events" aside in the hooks section with the current count (32) and a list of the events most useful for extending this setup — `PostToolBatch`, `PostToolUseFailure`, `SubagentStart`/`SubagentStop`, `InstructionsLoaded`, `PermissionRequest`/`PermissionDenied`, `ConfigChange`, `FileChanged`
 - **Settings** (`.claude/settings.json`): added `permissions.defaultMode: "default"` explicitly — same behavior as the implicit default, but now visible and easy to customize
 - **.env.example**: added `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS="0"` (explicit default; set to `1` to hide Claude Code's own bundled skills/workflows, project `.claude/skills/` is unaffected)
 - **README.md**: documented `permissions.defaultMode`, and noted `permissions.disableAutoMode`/`language` as available but intentionally unset (both lack a neutral value that preserves default behavior)
