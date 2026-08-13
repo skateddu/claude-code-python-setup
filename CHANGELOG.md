@@ -49,7 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **README.md**: the subagents section claimed nesting goes "up to 5 levels deep"; the default is 3 layers below the main conversation. Documented `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` as the way to change it
 - **README.md**: the `/orchestrate` row named stages (`planner → tdd → code-review → security`) matching no agent names. Corrected to the agents the command drives: `planner → tdd-guide → code-reviewer → security-reviewer`
 - **README.md**: the optional-dependency table credited `jq` to three hooks; all six parse their payload with it, so a partial install would break the other three
-- **README.md**: the project tree and the CI section described the workflow as lint plus configuration validation, omitting the shellcheck and pytest steps, and the ruff scope line omitted `tests/`
+- **README.md**: the project tree and the CI section did not list the workflow's shellcheck and pytest steps, and the ruff scope line omitted `tests/`
 
 ## [1.3.0] - 2026-06-14
 
