@@ -105,8 +105,8 @@ claude-code-python-setup/
 │   │   ├── protect-main.sh   # Block force push, direct push to main, broad rm -rf
 │   │   ├── auto-lint.sh      # Auto-format Python files with ruff after edits
 │   │   └── verify.sh         # Run ruff + pytest on Stop; block until green
-│   ├── rules/               # Modular coding standards
-│   │   ├── api-patterns.md  # FastAPI/Pydantic (path-scoped)
+│   ├── rules/                # Modular coding standards
+│   │   ├── api-patterns.md   # FastAPI/Pydantic (path-scoped)
 │   │   ├── architecture.md
 │   │   ├── compaction.md
 │   │   ├── documentation.md
@@ -118,7 +118,7 @@ claude-code-python-setup/
 │   │   └── testing.md
 │   ├── settings.json          # Project-level hooks, permissions, status line
 │   ├── statusline.py          # Status line script (Python, cross-platform)
-│   └── skills/              # Reference docs and scripts
+│   └── skills/                # Reference docs and scripts
 │       ├── api-design/
 │       ├── claude-api/
 │       ├── claude-automation-recommender/
@@ -149,6 +149,10 @@ claude-code-python-setup/
 │   └── windows.mcp.json     # MCP server config (Windows)
 ├── scripts/
 │   └── validate_config.py   # Checks this template's own config is coherent
+├── tests/
+│   ├── conftest.py          # Fixtures that run a hook against a payload
+│   ├── hook_harness.py      # HookResult and payload builders
+│   └── unit/                # One file per hook, asserting its decisions
 ├── .env.example             # Environment variables template
 ├── .gitattributes           # Force *.sh to LF so hooks run on Windows
 ├── .gitignore
@@ -550,15 +554,36 @@ The script is written in Python and works cross-platform: Windows, macOS, and Li
 |-------|---------|
 | `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py` and `scripts/` (`src/**/*.py` covers projects built from this template) |
 | `scripts/validate_config.py` | Unparseable `settings.json` or MCP config; hooks pointing at scripts that no longer exist; `CLAUDE.md` `@`-imports that don't resolve; skills whose `SKILL.md` lost its `name`/`description` frontmatter |
-| `shellcheck --severity=warning` | Quoting and logic bugs in the hook scripts |
+| `shellcheck --severity=warning` | Shell quoting and syntax bugs in the hook scripts |
+| `pytest` | Hooks reaching the **wrong decision** — see below |
 
-The middle three failures are all silent at runtime: a hook whose script was renamed simply stops firing, and a broken `@`-import drops that rule from Claude's context without an error. Run the same checks locally with:
+The `validate_config.py` failures are all silent at runtime: a hook whose script was renamed simply stops firing, and a broken `@`-import drops that rule from Claude's context without an error. Run everything locally with:
 
 ```bash
-uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py
+uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py && uv run pytest
 ```
 
-There is no test job: this repository ships configuration, not application code, so `pyproject.toml`'s pytest setup is there for the projects you build from it.
+### Hook tests (`tests/`)
+
+The hooks are the only enforced guardrails in this setup, and every past bug in them has been a **logic** error rather than a shell error — a condition that silently disabled a hook, a regex boundary that let `rm -rf /` through while blocking `rm -rf .git`. shellcheck cannot see either.
+
+So each test runs the real script in a subprocess with a crafted payload and asserts on the decision it emits. Nothing is mocked, because "the hook stopped firing" is precisely the regression worth catching.
+
+| File | Asserts |
+|------|---------|
+| `test_protect_main_hook.py` | Force pushes, pushes to main, `reset --hard` and broad `rm -rf` are denied — while `--force-with-lease`, `rm -rf .git` and `rm -rf ~/tmp-dir` still pass |
+| `test_enforce_uv_hook.py` | Bare `python`/`pytest`/`ruff` are rewritten to `uv run ...`; `pip` and compound commands are denied; anything already using uv is left alone |
+| `test_guard_secrets_hook.py` | Credential-shaped prompts are blocked, prose *about* credentials is not |
+| `test_session_start_hook.py` | Missing `.venv` or a stale `uv.lock` is reported; a healthy project stays silent |
+| `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
+| `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
+
+Two gaps are deliberate and worth knowing:
+
+- **`verify.sh`'s ruff/pytest execution path is not covered.** Running it from inside the suite would invoke pytest recursively, and a throwaway uv project would need a network install on every CI run. Only its guard clauses are tested.
+- **`auto-lint.sh`'s formatting path is not covered**, because whether ruff acts on a given file depends on the surrounding project's `include` configuration. Only the conditions under which the hook must do nothing are tested.
+
+Neither the tests nor `validate_config.py` check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. That wiring has broken before, and it remains verifiable only by running Claude Code.
 
 ## Contributing
 
