@@ -144,8 +144,10 @@ claude-code-python-setup/
 │       ├── webapp-testing/
 │       └── xlsx/
 ├── .github/
+│   ├── ISSUE_TEMPLATE/      # Bug report and feature request forms
+│   ├── pull_request_template.md
 │   └── workflows/
-│       └── ci.yml           # Lint, config validation, shellcheck, hook tests
+│       └── ci.yml           # Lint, shellcheck, hook tests on every PR
 ├── mcp_config/
 │   ├── linux_mac.mcp.json   # MCP server config (Linux/Mac)
 │   └── windows.mcp.json     # MCP server config (Windows)
