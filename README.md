@@ -60,7 +60,7 @@ Some components require additional tools. Install only what you need:
 | **Python >= 3.10 + uv** | postgres, docker MCP servers | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Docker** | docker MCP server | [docker.com](https://www.docker.com/get-started/) |
 | **PostgreSQL** | postgres MCP server | Running instance (local or remote) |
-| **jq** | hooks (enforce-uv, protect-main, auto-lint) | [jqlang.github.io/jq](https://jqlang.github.io/jq/download/) |
+| **jq** | all six hooks — each one parses its payload and builds its response with it | [jqlang.github.io/jq](https://jqlang.github.io/jq/download/) |
 | **bubblewrap + socat** | [Bash sandbox](#bash-sandbox-opt-in-not-enabled-here) on Linux/WSL2 only (macOS needs nothing; native Windows unsupported) | your package manager |
 | **[RTK](https://github.com/rtk-ai/rtk)** | token optimization (recommended) | [install guide](https://github.com/rtk-ai/rtk#installation) |
 
@@ -143,7 +143,7 @@ claude-code-python-setup/
 │       └── xlsx/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml           # Lint + configuration validation on every PR
+│       └── ci.yml           # Lint, config validation, shellcheck, hook tests
 ├── mcp_config/
 │   ├── linux_mac.mcp.json   # MCP server config (Linux/Mac)
 │   └── windows.mcp.json     # MCP server config (Windows)
@@ -218,7 +218,7 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `POSTGRES_*` | postgres MCP server | see `.env.example` | Database connection parameters |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | Claude Code | `95` | Context % threshold that triggers auto-compaction (lower = compacts earlier, reduces response time) |
 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: spawning a teammate via the Agent tool's `name` parameter implicitly forms a team for the session (no `TeamCreate`/`TeamDelete` setup needed) ([docs](https://code.claude.com/docs/en/agent-teams)) |
-| `CLAUDE_CODE_NO_FLICKER` | Claude Code | `1` (enabled) | Fullscreen rendering (flicker-free display, flat memory usage, mouse support) is now the default; set to `0` to opt back into the classic renderer, or use `"tui": "fullscreen"` in `settings.json` ([docs](https://code.claude.com/docs/en/fullscreen)) |
+| `CLAUDE_CODE_NO_FLICKER` | Claude Code | `1` (enabled) | Fullscreen rendering (flicker-free display, flat memory usage, mouse support) is the default; set to `0` for the classic renderer, or use `"tui": "fullscreen"` in `settings.json` ([docs](https://code.claude.com/docs/en/fullscreen)) |
 | `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` | Claude Code | `0` (enabled) | Set to `1` to hide the skills and workflows bundled with Claude Code itself (e.g. `/init`, `/security-review`); plugin skills and this project's own `.claude/skills/` are unaffected. Equivalent to `"disableBundledSkills": true` in `settings.json` ([docs](https://code.claude.com/docs/en/settings)) |
 | `BASH_DEFAULT_TIMEOUT_MS` | Claude Code | `120000` (2 min) | Default timeout for Bash commands. Raise it if your test suite regularly runs longer than two minutes, otherwise `uv run pytest` gets killed mid-run |
 | `BASH_MAX_OUTPUT_LENGTH` | Claude Code | `30000` (max `150000`) | Characters of command output Claude reads back. Raise it when verbose `pytest -v` output gets truncated before the failure summary |
@@ -359,7 +359,7 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 **Default permission mode** — `permissions.defaultMode` is set explicitly to `"default"` (prompt on first use of each tool) so the behavior is visible and easy to change, rather than relying on the implicit default. Other values: `"plan"` (read-only, no modifications), `"acceptEdits"` (auto-accepts file edits), `"bypassPermissions"` (skips all prompts — isolated environments only), `"dontAsk"` (auto-denies unless pre-approved), `"auto"` (auto-approves with background safety checks).
 
-> Since Claude Code v2.1.200 the `default` mode is **labeled "Manual"** in the CLI, the VS Code and JetBrains extensions, and the desktop app — look for "Manual", not "default", in the `Shift+Tab` mode cycle. The `"default"` value stays canonical and needs no migration; `"manual"` is accepted as an alias.
+> The label and the value differ: in the `Shift+Tab` cycle this mode appears as **"Manual"**, not "default" — in the CLI, the VS Code and JetBrains extensions, and the desktop app. `"default"` is the canonical value in `settings.json`; `"manual"` is accepted as an alias on Claude Code v2.1.200+.
 
 Two related settings are intentionally **not** set here, since they have no neutral value that preserves default behavior while being explicit — adding them would itself be a behavior change:
 
@@ -426,7 +426,7 @@ Key characteristics:
 - **Isolated context**: each agent runs in its own context window, keeping verbose output out of the main conversation
 - **Configurable tools and model**: agents can restrict tool access and use a different model (e.g., Haiku for speed)
 - **Nesting**: subagents can spawn their own subagents, up to 3 layers below the main conversation by default; at the limit Claude Code withholds the `Agent` tool so the subagent does the work itself. Change the limit with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
-- **Background by default**: subagents now run in the background while you keep working, and notify on completion or when they need input
+- **Background by default**: subagents run in the background while you keep working, and notify on completion or when they need input
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
 
@@ -548,11 +548,11 @@ The script is written in Python and works cross-platform: Windows, macOS, and Li
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It lints with ruff and validates that the configuration this template ships is internally coherent — the class of breakage that would otherwise reach whoever copies the `.claude/` folder.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It lints, checks that the configuration this template ships is internally coherent, and runs the hook tests — the kinds of breakage that would otherwise reach whoever copies the `.claude/` folder.
 
 | Check | Catches |
 |-------|---------|
-| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py` and `scripts/` (`src/**/*.py` covers projects built from this template) |
+| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py`, `scripts/` and `tests/` (`src/**/*.py` is in scope for projects built from this template) |
 | `scripts/validate_config.py` | Unparseable `settings.json` or MCP config; hooks pointing at scripts that no longer exist; `CLAUDE.md` `@`-imports that don't resolve; skills whose `SKILL.md` lost its `name`/`description` frontmatter |
 | `shellcheck --severity=warning` | Shell quoting and syntax bugs in the hook scripts |
 | `pytest` | Hooks reaching the **wrong decision** — see below |
@@ -565,9 +565,9 @@ uv run ruff check . && uv run ruff format --check . && uv run python scripts/val
 
 ### Hook tests (`tests/`)
 
-The hooks are the only enforced guardrails in this setup, and every past bug in them has been a **logic** error rather than a shell error — a condition that silently disabled a hook, a regex boundary that let `rm -rf /` through while blocking `rm -rf .git`. shellcheck cannot see either.
+The hooks are the only enforced guardrails in this setup, and the faults that matter in them are **logic** errors rather than shell errors: a script can be syntactically clean, correctly wired, and still reach the wrong decision — or stop firing altogether. shellcheck sees none of that.
 
-So each test runs the real script in a subprocess with a crafted payload and asserts on the decision it emits. Nothing is mocked, because "the hook stopped firing" is precisely the regression worth catching.
+So each test runs the real script in a subprocess with a crafted payload and asserts on the decision it emits. Nothing is mocked, because "the hook stopped firing" is precisely the regression worth catching, and a mock cannot fail that way.
 
 | File | Asserts |
 |------|---------|
@@ -583,7 +583,7 @@ Two gaps are deliberate and worth knowing:
 - **`verify.sh`'s ruff/pytest execution path is not covered.** Running it from inside the suite would invoke pytest recursively, and a throwaway uv project would need a network install on every CI run. Only its guard clauses are tested.
 - **`auto-lint.sh`'s formatting path is not covered**, because whether ruff acts on a given file depends on the surrounding project's `include` configuration. Only the conditions under which the hook must do nothing are tested.
 
-Neither the tests nor `validate_config.py` check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. That wiring has broken before, and it remains verifiable only by running Claude Code.
+Neither the tests nor `validate_config.py` check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. A hook can be correct, referenced, and still never fire. That wiring is verifiable only by running Claude Code.
 
 ## Contributing
 
