@@ -99,6 +99,8 @@ claude-code-python-setup/
 │   │   ├── revise-claude-md.md
 │   │   └── test-coverage.md
 │   ├── hooks/                # Deterministic guardrails
+│   │   ├── lib/
+│   │   │   └── command-text.sh  # Strips heredoc bodies before pattern matching
 │   │   ├── session-start.sh  # Check uv env (.venv, lockfile) at session start
 │   │   ├── guard-secrets.sh  # Block prompts containing hardcoded secrets
 │   │   ├── enforce-uv.sh     # Rewrite bare python/pytest to uv run, block pip
@@ -306,6 +308,7 @@ Key characteristics:
 - **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
 - **Conditional**: an `if` field (permission-rule syntax, e.g. `Bash(git *)`) scopes a hook to matching commands so it doesn't spawn a process on every tool call — `enforce-uv` and `protect-main` use this to skip non-Python/non-git commands
 - **Dependency**: requires `jq` for JSON parsing of hook input
+- **Code vs. text**: a hook receives the whole command string, which mixes code with data. The two `PreToolUse` hooks strip heredoc bodies (via `hooks/lib/command-text.sh`) before matching, so a `gh pr create` whose description quotes `pip install` or `rm -rf /` isn't mistaken for running them
 
 This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes **32 events** in total. Among the ones most useful to extend this setup:
 
@@ -577,6 +580,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | `test_session_start_hook.py` | Missing `.venv` or a stale `uv.lock` is reported; a healthy project stays silent |
 | `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
 | `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
+| `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
 
 Two gaps are deliberate and worth knowing:
 
