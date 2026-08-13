@@ -6,7 +6,9 @@
 # Requires: jq
 set -euo pipefail
 
-input=$(cat)
+# This hook inspects the filesystem rather than the hook payload, but stdin is
+# still drained so Claude Code's write to the pipe always completes.
+cat >/dev/null
 
 # Only act inside a uv-managed Python project.
 [ -f pyproject.toml ] || exit 0

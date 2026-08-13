@@ -54,7 +54,9 @@ agents = [
 [tool.ruff]
 line-length = 99
 src = ["src"]
-include = ["pyproject.toml", "src/**/*.py"]
+# src/** is for projects built from this template; the other two are the Python
+# this repo actually ships. Vendored .claude/skills/ scripts stay out of scope.
+include = ["pyproject.toml", "src/**/*.py", "scripts/**/*.py", ".claude/statusline.py"]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
