@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **README.md**: a "Bash Sandbox" section documenting Claude Code's OS-enforced filesystem and network isolation for Bash commands, with a paste-ready `sandbox` block for a uv-based Python project (allowlists PyPI and GitHub so `uv sync`/`uv add`/`git` don't prompt; denies reads of `~/.aws/credentials` and `~/.ssh`). Deliberately **not** enabled in `.claude/settings.json`: the sandbox doesn't run on native Windows, and enabling it in checked-in project settings would produce a startup warning for every Windows contributor — so the section recommends user-level settings instead. Documents the two footguns worth knowing up front: there's no built-in credential deny list (only what you list is protected), and the `dangerouslyDisableSandbox` retry can put a failed command back outside the boundary unless `allowUnsandboxedCommands` is `false`
+- **README.md**: added `bubblewrap` + `socat` to the optional dependencies table — needed for the sandbox on Linux/WSL2, while macOS uses the built-in Seatbelt framework
+- **.env.example** / **README.md**: four Claude Code tuning variables. `BASH_DEFAULT_TIMEOUT_MS` (default `120000`) and `BASH_MAX_OUTPUT_LENGTH` (default `30000`, max `150000`) matter for this template specifically — a test suite running over two minutes gets killed mid-run, and verbose `pytest -v` output can be truncated before the failure summary. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (default `3`) and `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` (default `20`, requires v2.1.217+) are listed as explicit defaults
+
 ### Removed
 
 - **Commands** (`.claude/commands/code-review.md`): deleted. `/code-review` became a built-in Claude Code command (v2.1.218 runs it as a background subagent, v2.1.223 made `/review` its alias and added reusable effort levels such as `/code-review high`), and a project command of the same name shadows it — the built-in was missing from the session's skill list until the file was removed. The built-in supersedes this copy: it does the same multi-agent diff review and adds effort levels, `--fix`, `--comment`, and `/code-review ultra` for a cloud review. The `code-reviewer` agent and `/review-pr` (which drives it for a formal GitHub review decision) are unaffected

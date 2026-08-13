@@ -60,6 +60,7 @@ Some components require additional tools. Install only what you need:
 | **Docker** | docker MCP server | [docker.com](https://www.docker.com/get-started/) |
 | **PostgreSQL** | postgres MCP server | Running instance (local or remote) |
 | **jq** | hooks (enforce-uv, protect-main, auto-lint) | [jqlang.github.io/jq](https://jqlang.github.io/jq/download/) |
+| **bubblewrap + socat** | [Bash sandbox](#bash-sandbox-opt-in-not-enabled-here) on Linux/WSL2 only (macOS needs nothing; native Windows unsupported) | your package manager |
 | **[RTK](https://github.com/rtk-ai/rtk)** | token optimization (recommended) | [install guide](https://github.com/rtk-ai/rtk#installation) |
 
 > `npx` comes with Node.js. `uvx` comes with uv. No additional installs needed beyond the base tools.
@@ -209,6 +210,10 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Claude Code | `0` (disabled) | Set to `1` to enable Agent Teams: spawning a teammate via the Agent tool's `name` parameter implicitly forms a team for the session (no `TeamCreate`/`TeamDelete` setup needed) ([docs](https://code.claude.com/docs/en/agent-teams)) |
 | `CLAUDE_CODE_NO_FLICKER` | Claude Code | `1` (enabled) | Fullscreen rendering (flicker-free display, flat memory usage, mouse support) is now the default; set to `0` to opt back into the classic renderer, or use `"tui": "fullscreen"` in `settings.json` ([docs](https://code.claude.com/docs/en/fullscreen)) |
 | `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` | Claude Code | `0` (enabled) | Set to `1` to hide the skills and workflows bundled with Claude Code itself (e.g. `/init`, `/security-review`); plugin skills and this project's own `.claude/skills/` are unaffected. Equivalent to `"disableBundledSkills": true` in `settings.json` ([docs](https://code.claude.com/docs/en/settings)) |
+| `BASH_DEFAULT_TIMEOUT_MS` | Claude Code | `120000` (2 min) | Default timeout for Bash commands. Raise it if your test suite regularly runs longer than two minutes, otherwise `uv run pytest` gets killed mid-run |
+| `BASH_MAX_OUTPUT_LENGTH` | Claude Code | `30000` (max `150000`) | Characters of command output Claude reads back. Raise it when verbose `pytest -v` output gets truncated before the failure summary |
+| `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | Claude Code | `3` | How many layers of subagents can nest below the main conversation. Set `1` to turn nesting off ([docs](https://code.claude.com/docs/en/sub-agents)) |
+| `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | Claude Code | `20` | How many subagents may run at once before `Agent` spawns start failing. Requires Claude Code v2.1.217+ ([docs](https://code.claude.com/docs/en/sub-agents)) |
 
 ### 4. Verify MCP servers
 
@@ -350,6 +355,52 @@ Two related settings are intentionally **not** set here, since they have no neut
 - `language: "italian"` (or any language name) — pins Claude's response language, voice dictation, and terminal tab title generation to that language; omitting it lets Claude follow the conversation's language.
 
 > Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
+
+### Bash Sandbox (opt-in, not enabled here)
+
+The permission rules above govern **Claude's tools**. The Bash sandbox is a different layer: it constrains what a shell command can touch *once it runs*, enforced by the operating system for the command and every child process it spawns. A `deny` rule stops the `Read` tool from opening `~/.ssh/id_rsa`; the sandbox stops a shell command from reading it.
+
+In exchange for defining the boundary up front, Claude stops asking permission for each command — in auto-allow mode, anything that fits inside the sandbox just runs.
+
+**This template does not enable it**, deliberately. The sandbox runs on macOS, Linux, and WSL2, but **not on native Windows**, and this setup is meant to work unchanged on all three. Enabling it in a checked-in `.claude/settings.json` would degrade to a startup warning for every Windows contributor. Turn it on per-machine instead: run `/sandbox` to see the panel, install status, and mode.
+
+On macOS nothing needs installing (it uses Seatbelt). On Linux and WSL2 it needs `bubblewrap` (filesystem isolation) and `socat` (network relay).
+
+A starting point for a uv-based Python project — add to your **user** settings (`~/.claude/settings.json`) so it follows you across projects without affecting Windows contributors:
+
+```json
+{
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowedDomains": [
+        "pypi.org",
+        "files.pythonhosted.org",
+        "github.com",
+        "*.githubusercontent.com"
+      ]
+    },
+    "credentials": {
+      "files": [
+        { "path": "~/.aws/credentials", "mode": "deny" },
+        { "path": "~/.ssh", "mode": "deny" }
+      ],
+      "envVars": [
+        { "name": "POSTGRES_PASSWORD", "mode": "deny" }
+      ]
+    }
+  }
+}
+```
+
+The `allowedDomains` list covers `uv sync`, `uv add`, and `git` against GitHub. Any other host prompts once on first use, so the list only needs the traffic you don't want to be asked about. Sandboxed commands can write to the working directory and the session temp directory; widen that with `sandbox.filesystem.allowWrite` if a tool needs more.
+
+Two things worth knowing before relying on it:
+
+- **There is no built-in credential deny list.** Only the paths and variables you list under `credentials` are protected — the default read policy still allows `~/.aws` and `~/.ssh`. The block above is a starting point, not a complete one.
+- **Sandbox failures can be retried outside the sandbox.** When a command fails on a sandbox restriction, Claude may retry it with `dangerouslyDisableSandbox`, which then goes through the normal permission flow. Set `"allowUnsandboxedCommands": false` to remove that escape hatch entirely.
+
+> Full documentation: [code.claude.com/docs/en/sandboxing](https://code.claude.com/docs/en/sandboxing)
 
 ### Agents (`.claude/agents/`)
 
