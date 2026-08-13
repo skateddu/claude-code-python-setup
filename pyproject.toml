@@ -56,7 +56,13 @@ line-length = 99
 src = ["src"]
 # src/** is for projects built from this template; the other two are the Python
 # this repo actually ships. Vendored .claude/skills/ scripts stay out of scope.
-include = ["pyproject.toml", "src/**/*.py", "scripts/**/*.py", ".claude/statusline.py"]
+include = [
+    "pyproject.toml",
+    "src/**/*.py",
+    "tests/**/*.py",
+    "scripts/**/*.py",
+    ".claude/statusline.py",
+]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
@@ -64,7 +70,7 @@ select = ["E", "F", "W", "I", "UP"]
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["src", "tests"]
 force-sort-within-sections = true
 
 [tool.ruff.format]

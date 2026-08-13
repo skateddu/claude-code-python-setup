@@ -46,3 +46,8 @@ jobs:
       # have shipped before. Warning severity skips style nitpicks.
       - name: Shellcheck hooks
         run: shellcheck --severity=warning .claude/hooks/*.sh
+
+      # Runs each hook script for real against crafted payloads. shellcheck
+      # catches shell mistakes; these catch wrong decisions.
+      - name: Test hook behaviour
+        run: uv run pytest
