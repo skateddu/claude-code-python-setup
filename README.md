@@ -149,8 +149,6 @@ claude-code-python-setup/
 ├── mcp_config/
 │   ├── linux_mac.mcp.json   # MCP server config (Linux/Mac)
 │   └── windows.mcp.json     # MCP server config (Windows)
-├── scripts/
-│   └── validate_config.py   # Checks this template's own config is coherent
 ├── tests/
 │   ├── conftest.py          # Fixtures that run a hook against a payload
 │   ├── hook_harness.py      # HookResult and payload builders
@@ -551,19 +549,18 @@ The script is written in Python and works cross-platform: Windows, macOS, and Li
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It lints, checks that the configuration this template ships is internally coherent, and runs the hook tests — the kinds of breakage that would otherwise reach whoever copies the `.claude/` folder.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It lints and runs the hook tests, so the guardrails this template ships are known to work before anyone copies the `.claude/` folder.
 
 | Check | Catches |
 |-------|---------|
-| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py`, `scripts/` and `tests/` (`src/**/*.py` is in scope for projects built from this template) |
-| `scripts/validate_config.py` | Unparseable `settings.json` or MCP config; hooks pointing at scripts that no longer exist; `CLAUDE.md` `@`-imports that don't resolve; skills whose `SKILL.md` lost its `name`/`description` frontmatter |
+| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py` and `tests/` (`src/**/*.py` is in scope for projects built from this template) |
 | `shellcheck --severity=warning` | Shell quoting and syntax bugs in the hook scripts |
 | `pytest` | Hooks reaching the **wrong decision** — see below |
 
-The `validate_config.py` failures are all silent at runtime: a hook whose script was renamed simply stops firing, and a broken `@`-import drops that rule from Claude's context without an error. Run everything locally with:
+Run the same checks locally with:
 
 ```bash
-uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py && uv run pytest
+uv run ruff check . && uv run ruff format --check . && uv run pytest
 ```
 
 ### Hook tests (`tests/`)
@@ -587,7 +584,7 @@ Two gaps are deliberate and worth knowing:
 - **`verify.sh`'s ruff/pytest execution path is not covered.** Running it from inside the suite would invoke pytest recursively, and a throwaway uv project would need a network install on every CI run. Only its guard clauses are tested.
 - **`auto-lint.sh`'s formatting path is not covered**, because whether ruff acts on a given file depends on the surrounding project's `include` configuration. Only the conditions under which the hook must do nothing are tested.
 
-Neither the tests nor `validate_config.py` check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. A hook can be correct, referenced, and still never fire. That wiring is verifiable only by running Claude Code.
+The tests do not check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. A hook can be correct, referenced, and still never fire. That wiring is verifiable only by running Claude Code.
 
 ## Contributing
 

@@ -22,9 +22,9 @@ Open a [feature request](https://github.com/skateddu/claude-code-python-setup/is
 1. Fork the repository
 2. Create a branch from `main`: `git checkout -b feature/your-change`
 3. Make your changes
-4. Run the verification checks — these are the same four the CI runs, so passing here means passing there:
+4. Run the verification checks — the same ones CI runs, so passing here means passing there:
    ```bash
-   uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py && uv run pytest
+   uv run ruff check . && uv run ruff format --check . && uv run pytest
    ```
    CI additionally runs `shellcheck --severity=warning .claude/hooks/*.sh`, which needs [shellcheck](https://github.com/koalaman/shellcheck#installing) locally.
 5. Commit using [Conventional Commits](https://www.conventionalcommits.org/) format:
@@ -44,7 +44,7 @@ cd claude-code-python-setup
 uv sync
 
 # Verify everything works
-uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py && uv run pytest
+uv run ruff check . && uv run ruff format --check . && uv run pytest
 ```
 
 The hook tests shell out to the scripts in `.claude/hooks/`, so they need `bash` and `jq` on your PATH. Without them the suite skips rather than fails.
