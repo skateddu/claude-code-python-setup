@@ -1,5 +1,6 @@
 # Claude Code Python Setup
 
+[![CI](https://github.com/skateddu/claude-code-python-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/skateddu/claude-code-python-setup/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/skateddu/claude-code-python-setup)](LICENSE)
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org/)
 [![GitHub stars](https://img.shields.io/github/stars/skateddu/claude-code-python-setup)](https://github.com/skateddu/claude-code-python-setup/stargazers)
@@ -140,9 +141,14 @@ claude-code-python-setup/
 │       ├── skill-creator/
 │       ├── webapp-testing/
 │       └── xlsx/
+├── .github/
+│   └── workflows/
+│       └── ci.yml           # Lint + configuration validation on every PR
 ├── mcp_config/
 │   ├── linux_mac.mcp.json   # MCP server config (Linux/Mac)
 │   └── windows.mcp.json     # MCP server config (Windows)
+├── scripts/
+│   └── validate_config.py   # Checks this template's own config is coherent
 ├── .env.example             # Environment variables template
 ├── .gitattributes           # Force *.sh to LF so hooks run on Windows
 ├── .gitignore
@@ -535,6 +541,24 @@ The status line shows three rows:
 The script is written in Python and works cross-platform: Windows, macOS, and Linux. Git operations are cached for 5 seconds to avoid lag on large repositories.
 
 > Full documentation: [code.claude.com/docs/en/statusline](https://code.claude.com/docs/en/statusline)
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It lints with ruff and validates that the configuration this template ships is internally coherent — the class of breakage that would otherwise reach whoever copies the `.claude/` folder.
+
+| Check | Catches |
+|-------|---------|
+| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py` and `scripts/` (`src/**/*.py` covers projects built from this template) |
+| `scripts/validate_config.py` | Unparseable `settings.json` or MCP config; hooks pointing at scripts that no longer exist; `CLAUDE.md` `@`-imports that don't resolve; skills whose `SKILL.md` lost its `name`/`description` frontmatter |
+| `shellcheck --severity=warning` | Quoting and logic bugs in the hook scripts |
+
+The middle three failures are all silent at runtime: a hook whose script was renamed simply stops firing, and a broken `@`-import drops that rule from Claude's context without an error. Run the same checks locally with:
+
+```bash
+uv run ruff check . && uv run ruff format --check . && uv run python scripts/validate_config.py
+```
+
+There is no test job: this repository ships configuration, not application code, so `pyproject.toml`'s pytest setup is there for the projects you build from it.
 
 ## Contributing
 
