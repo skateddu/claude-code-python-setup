@@ -14,8 +14,11 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Anchored to the repo root: these are distutils build output, and unanchored
+# they would swallow any nested source directory named lib/ — including this
+# template's own .claude/hooks/lib/.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
