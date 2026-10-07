@@ -143,10 +143,14 @@ CMD ["/server"]
 
 ```dockerfile
 FROM python:3.12-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
-RUN pip install --no-cache-dir uv
-COPY requirements.txt .
-RUN uv pip install --system --no-cache -r requirements.txt
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+# Dependencies first, from the lockfile, so this layer is cached until uv.lock changes
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
+COPY . .
+RUN uv sync --locked --no-dev
 
 FROM python:3.12-slim AS runner
 WORKDIR /app
@@ -154,11 +158,9 @@ WORKDIR /app
 RUN useradd -r -u 1001 appuser
 USER appuser
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY . .
+COPY --from=builder --chown=appuser /app /app
 
-ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')" || exit 1

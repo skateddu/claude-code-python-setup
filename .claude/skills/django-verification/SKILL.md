@@ -20,14 +20,14 @@ Run before PRs, after major changes, and pre-deploy to ensure Django application
 
 ```bash
 # Verify Python version
-python --version  # Should match project requirements
+uv run python --version  # Should match requires-python in pyproject.toml
 
-# Check virtual environment
-which python
+# Check the environment is in sync with uv.lock
+uv sync --locked
 uv pip list --outdated
 
 # Verify environment variables
-python -c "import os; import environ; print('DJANGO_SECRET_KEY set' if os.environ.get('DJANGO_SECRET_KEY') else 'MISSING: DJANGO_SECRET_KEY')"
+uv run python -c "import os; import environ; print('DJANGO_SECRET_KEY set' if os.environ.get('DJANGO_SECRET_KEY') else 'MISSING: DJANGO_SECRET_KEY')"
 ```
 
 If environment is misconfigured, stop and fix.
@@ -35,22 +35,18 @@ If environment is misconfigured, stop and fix.
 ## Phase 2: Code Quality & Formatting
 
 ```bash
-# Type checking
-mypy . --config-file pyproject.toml
+# Type checking (mypy is in the opt-in `agents` group: uv sync --group agents)
+uv run mypy . --config-file pyproject.toml
 
-# Linting with ruff
-ruff check . --fix
+# Linting with ruff (import sorting included via the "I" rules)
+uv run ruff check . --fix
 
-# Formatting with black
-black . --check
-black .  # Auto-fix
-
-# Import sorting
-isort . --check-only
-isort .  # Auto-fix
+# Formatting with ruff
+uv run ruff format --check .
+uv run ruff format .  # Auto-fix
 
 # Django-specific checks
-python manage.py check --deploy
+uv run python manage.py check --deploy
 ```
 
 Common issues:
@@ -63,19 +59,19 @@ Common issues:
 
 ```bash
 # Check for unapplied migrations
-python manage.py showmigrations
+uv run python manage.py showmigrations
 
 # Create missing migrations
-python manage.py makemigrations --check
+uv run python manage.py makemigrations --check
 
 # Dry-run migration application
-python manage.py migrate --plan
+uv run python manage.py migrate --plan
 
 # Apply migrations (test environment)
-python manage.py migrate
+uv run python manage.py migrate
 
 # Check for migration conflicts
-python manage.py makemigrations --merge  # Only if conflicts exist
+uv run python manage.py makemigrations --merge  # Only if conflicts exist
 ```
 
 Report:
@@ -87,14 +83,14 @@ Report:
 
 ```bash
 # Run all tests with pytest
-pytest --cov=apps --cov-report=html --cov-report=term-missing --reuse-db
+uv run pytest --cov=apps --cov-report=html --cov-report=term-missing --reuse-db
 
 # Run specific app tests
-pytest apps/users/tests/
+uv run pytest apps/users/tests/
 
 # Run with markers
-pytest -m "not slow"  # Skip slow tests
-pytest -m integration  # Only integration tests
+uv run pytest -m "not slow"  # Skip slow tests
+uv run pytest -m integration  # Only integration tests
 
 # Coverage report
 open htmlcov/index.html
@@ -294,8 +290,7 @@ Phase 1: Environment Check
 Phase 2: Code Quality
   ✓ mypy: No type errors
   ✗ ruff: 3 issues found (auto-fixed)
-  ✓ black: No formatting issues
-  ✓ isort: Imports properly sorted
+  ✓ ruff format: No formatting issues
   ✓ manage.py check: No issues
 
 Phase 3: Migrations
@@ -411,41 +406,33 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.11'
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install ruff black mypy pytest pytest-django pytest-cov bandit safety pip-audit
+        # Installs the default `dev` group plus the opt-in `agents` group (mypy, bandit, safety, pip-audit)
+        run: uv sync --locked --group agents
 
       - name: Code quality checks
         run: |
-          ruff check .
-          black . --check
-          isort . --check-only
-          mypy .
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy .
 
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-          safety check --full-report
-          pip-audit
+          uv run bandit -r . -f json -o bandit-report.json
+          uv run safety check --full-report
+          uv run pip-audit
 
       - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           DJANGO_SECRET_KEY: test-secret-key
         run: |
-          pytest --cov=apps --cov-report=xml --cov-report=term-missing
+          uv run pytest --cov=apps --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -455,15 +442,15 @@ jobs:
 
 | Check | Command |
 |-------|---------|
-| Environment | `python --version` |
-| Type checking | `mypy .` |
-| Linting | `ruff check .` |
-| Formatting | `black . --check` |
-| Migrations | `python manage.py makemigrations --check` |
-| Tests | `pytest --cov=apps` |
-| Security | `pip-audit && bandit -r .` |
-| Django check | `python manage.py check --deploy` |
-| Collectstatic | `python manage.py collectstatic --noinput` |
+| Environment | `uv sync --locked` |
+| Type checking | `uv run mypy .` |
+| Linting | `uv run ruff check .` |
+| Formatting | `uv run ruff format --check .` |
+| Migrations | `uv run python manage.py makemigrations --check` |
+| Tests | `uv run pytest --cov=apps` |
+| Security | `uv run pip-audit && uv run bandit -r .` |
+| Django check | `uv run python manage.py check --deploy` |
+| Collectstatic | `uv run python manage.py collectstatic --noinput` |
 | Diff stats | `git diff --stat` |
 
 Remember: Automated verification catches common issues but doesn't replace manual code review and testing in staging environment.
