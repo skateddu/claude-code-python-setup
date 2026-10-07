@@ -41,7 +41,7 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 - Use `lowercase_snake_case` identifiers (no quoted mixed-case)
 
 ### 3. Security (CRITICAL)
-- RLS enabled on multi-tenant tables with `(SELECT auth.uid())` pattern
+- RLS enabled on multi-tenant tables, with the per-request identity read once per statement — wrap the function call in `SELECT`, e.g. `(SELECT current_setting('app.user_id'))` (on Supabase, `(SELECT auth.uid())`)
 - RLS policy columns indexed
 - Least privilege access — no `GRANT ALL` to application users
 - Public schema permissions revoked
@@ -74,7 +74,7 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 - [ ] Composite indexes in correct column order
 - [ ] Proper data types (bigint, text, timestamptz, numeric)
 - [ ] RLS enabled on multi-tenant tables
-- [ ] RLS policies use `(SELECT auth.uid())` pattern
+- [ ] RLS policies wrap identity functions in `SELECT`
 - [ ] Foreign keys have indexes
 - [ ] No N+1 query patterns
 - [ ] EXPLAIN ANALYZE run on complex queries

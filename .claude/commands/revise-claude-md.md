@@ -16,13 +16,12 @@ What context was missing that would have helped Claude work more effectively?
 
 ## Step 2: Find CLAUDE.md Files
 
-```bash
-find . -name "CLAUDE.md" -o -name ".claude.local.md" 2>/dev/null | head -20
-```
+Use Glob with the patterns `**/CLAUDE.md`, `**/CLAUDE.local.md` and `.claude/rules/*.md`.
 
 Decide where each addition belongs:
 - `CLAUDE.md` - Team-shared (checked into git)
-- `.claude.local.md` - Personal/local only (gitignored)
+- `.claude/rules/<topic>.md` - Team-shared standards on a single topic, when a matching rule file exists
+- `CLAUDE.local.md` - Personal/local only (gitignored)
 
 ## Step 3: Draft Additions
 

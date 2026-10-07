@@ -55,9 +55,9 @@ Remove duplication, improve names, optimize. Tests must stay green after every c
 uv run pytest --cov=src --cov-report=term-missing
 ```
 
-## Edge Cases You MUST Test
+## Edge Cases to Consider
 
-For every function, consider these inputs:
+Test the ones that apply to the function's inputs and behavior; a pure function with typed arguments does not need race-condition or 10k-item tests:
 
 1. **None** input
 2. **Empty** collections/strings
