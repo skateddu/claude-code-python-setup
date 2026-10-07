@@ -265,6 +265,10 @@ Key characteristics:
 
 This setup's `CLAUDE.md` contains project specs (OS, language, tools), naming conventions, file organization, common commands, and `@import` references to all rules.
 
+In a project with no `CLAUDE.md`, Claude Code reads `AGENTS.md` instead (configurable under "Project instructions" in `/config`). This template ships `CLAUDE.md`, so `AGENTS.md` is ignored unless you remove it.
+
+Run `/doctor prompt-audit` (also `/checkup prompt-audit`) after customizing the template, and again after a model upgrade: it audits your `CLAUDE.md` files, skills, agents and commands for prompting patterns written for older models. Requires Claude Code v2.1.283+.
+
 > Full documentation: [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)
 
 ### Rules (`.claude/rules/`)
@@ -310,13 +314,14 @@ Key characteristics:
 - **Dependency**: requires `jq` for JSON parsing of hook input
 - **Code vs. text**: a hook receives the whole command string, which mixes code with data. The two `PreToolUse` hooks strip heredoc bodies (via `hooks/lib/command-text.sh`) before matching, so a `gh pr create` whose description quotes `pip install` or `rm -rf /` isn't mistaken for running them
 
-This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`. Claude Code exposes **32 events** in total. Among the ones most useful to extend this setup:
+This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`, all with `command` handlers. Claude Code exposes more than thirty events, and four other handler types: `http` (POST to an endpoint), `mcp_tool` (call a tool on a configured MCP server), `prompt` (a single-turn model evaluation) and `agent` (a subagent that can use tools, experimental). Among the events most useful to extend this setup:
 
 - `PostToolBatch` — after a whole batch of parallel tool calls resolves (run linting once per batch instead of once per file)
 - `PostToolUseFailure` — after a tool call fails, for reacting to errors rather than successes
 - `SubagentStart` / `SubagentStop` — around each subagent's lifecycle
 - `InstructionsLoaded` — when a `CLAUDE.md` or `.claude/rules/*.md` file is loaded into context
 - `PermissionRequest` / `PermissionDenied` — when a call needs a permission decision, or auto mode denies it
+- `PreModelSwitch` / `PostModelSwitch` — block, confirm or annotate a model switch, for example to warn before moving a long session to a model whose cache is cold
 - `SessionEnd`, `PreCompact` / `PostCompact`, `Notification`, `ConfigChange`, `FileChanged`
 
 See the docs for the full list.
@@ -358,7 +363,7 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 > Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
 
-**Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-5", "claude-haiku-4-5-20251001"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
+**Fallback model** — `.claude/settings.json` also sets `fallbackModel`, a chain of up to three models (e.g. `["claude-sonnet-5-5", "claude-haiku-5-5"]`) that Claude Code switches to when the primary model is overloaded or unavailable, keeping the session going. Edit or remove the array to match your plan's model access.
 
 **Default permission mode** — `permissions.defaultMode` is set explicitly to `"default"` (prompt on first use of each tool) so the behavior is visible and easy to change, rather than relying on the implicit default. Other values: `"plan"` (read-only, no modifications), `"acceptEdits"` (auto-accepts file edits), `"bypassPermissions"` (skips all prompts — isolated environments only), `"dontAsk"` (auto-denies unless pre-approved), `"auto"` (auto-approves with background safety checks).
 
@@ -468,12 +473,16 @@ Key characteristics:
 
 > Full documentation: [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills)
 
-Ten of the skills below are **vendored from [anthropics/skills](https://github.com/anthropics/skills)** rather than written for this template: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx`. They are copies, so they don't update themselves — re-sync them from upstream periodically, especially `claude-api`, which pins the model IDs Claude will reach for. Last synced from upstream `f17010c` (2026-08-13).
+Ten of the skills below are **vendored from [anthropics/skills](https://github.com/anthropics/skills)** rather than written for this template: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx`. They are copies, so they don't update themselves — re-sync them from upstream periodically, especially `claude-api`, which pins the model IDs Claude will reach for. Last synced from upstream `683bc88` (2026-10-07).
+
+Upstream's other skills (`academy-guide`, `discernment-nudge`, `algorithmic-art`, `canvas-design`, `brand-guidelines`, `internal-comms`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`) are deliberately not vendored: they fall outside Python development, and every installed skill's description costs context in every session.
+
+Every skill here is loaded whether a project uses it or not. Run `/skill-doctor` after a few sessions to see which skills go unused and what each costs in context, then delete the directories your project doesn't need — the Django and Office-document skills are the usual candidates in a FastAPI project.
 
 | Skill | Description |
 |-------|-------------|
 | **api-design** | REST API design: resource naming, status codes, pagination, versioning |
-| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration |
+| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration, cost optimization, evals, Python SDK 0.x → 1.x upgrade |
 | **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) |
 | **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates |
 | **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) |
@@ -542,7 +551,7 @@ The status line shows three rows:
 | Row | Content |
 |-----|---------|
 | **1** | Model name, current directory, git branch with staged/modified counts (color-coded) |
-| **2** | Context window progress bar (green/yellow/red), context %, session cost, elapsed time |
+| **2** | Context window progress bar (green/yellow/red), context %, session cost, elapsed time, prompt-cache hit ratio (green while the cache is warm, yellow once it has gone cold; hidden until first API response, requires Claude Code v2.1.251+) |
 | **3** | Rate limit usage bars for 5-hour and 7-day windows (Pro/Max only, hidden until first API response) |
 
 The script is written in Python and works cross-platform: Windows, macOS, and Linux. Git operations are cached for 5 seconds to avoid lag on large repositories.
@@ -580,6 +589,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
 | `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
 | `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
+| `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists |
 
 Two gaps are deliberate and worth knowing:
 

@@ -1,4 +1,4 @@
-"""Claude Code status line: model, git, context bar, cost, duration."""
+"""Claude Code status line: model, git, context bar, cost, duration, prompt cache."""
 
 import json
 import os
@@ -86,6 +86,28 @@ def _git_info(cwd: str) -> tuple[str, int, int]:
     return branch, staged, modified
 
 
+def _prompt_cache_info(prompt_cache: dict) -> str:
+    """Return the prompt-cache hit ratio, colored by whether the cache is warm.
+
+    Parameters
+    ----------
+    prompt_cache
+        The status line's ``prompt_cache`` object; empty before the first API response.
+
+    Returns
+    -------
+    str
+        A segment such as ``" | cache 91%"``, or an empty string while no ratio exists yet.
+    """
+    hit_ratio = prompt_cache.get("hit_ratio")
+    if hit_ratio is None:
+        return ""
+
+    # A cold cache means the next request re-processes the whole prompt at full price.
+    color = GREEN if prompt_cache.get("warm") else YELLOW
+    return f" | cache {color}{round(hit_ratio * 100)}%{RESET}"
+
+
 def main() -> None:
     data = json.load(fp=sys.stdin)
 
@@ -110,11 +132,13 @@ def main() -> None:
 
     print(f"model: {CYAN}[{model}]{RESET} | directory: {dir_name}{git_info}")
 
-    # --- Line 2: context bar, cost, duration ---
+    # --- Line 2: context bar, cost, duration, prompt cache ---
     mins = duration_ms // 60000
     secs = (duration_ms % 60000) // 1000
+    cache_info = _prompt_cache_info(prompt_cache=data.get("prompt_cache", {}))
 
-    print(f"session: {_progress_bar(pct)} {pct}% | {YELLOW}${cost:.2f}{RESET} | {mins}m {secs}s")
+    cost_info = f"{YELLOW}${cost:.2f}{RESET}"
+    print(f"session: {_progress_bar(pct)} {pct}% | {cost_info} | {mins}m {secs}s{cache_info}")
 
     # --- Line 3: rate limits (Pro/Max only, absent until first API response) ---
     rate_limits = data.get("rate_limits", {})
