@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(gh pr checkout:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr review:*), Bash(git diff:*), Bash(git log:*), Task, Read, Glob, Grep, AskUserQuestion
+allowed-tools: Bash(gh pr checkout:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr review:*), Bash(git diff:*), Bash(git log:*), Agent, Read, Glob, Grep, AskUserQuestion
 description: Review an open pull request and optionally post the review to GitHub
 ---
 
@@ -28,7 +28,7 @@ gh pr diff $ARGUMENTS
 
 ### Step 3: Review the code changes
 
-Use the Task tool with `subagent_type: "code-reviewer"` to perform a thorough code review of the changes. Pass the diff and changed files to the agent for analysis.
+Use the Agent tool with `subagent_type: "code-reviewer"` to perform a thorough code review of the changes. Pass the diff and changed files to the agent for analysis.
 
 The code-reviewer agent will analyze:
 - Code quality and best practices

@@ -19,12 +19,14 @@ You are an expert refactoring specialist focused on Python code cleanup and cons
 ## Detection Commands
 
 ```bash
-vulture src/                                # Find unused code (functions, variables, imports)
-vulture src/ tests/ --min-confidence 80     # Higher confidence threshold
-ruff check . --select F811,F401,F841        # Unused imports (F401), variables (F841), redefined (F811)
-autoflake --check -r src/                   # Detect unused imports and variables
-pip-audit                                   # Check for unused/vulnerable dependencies
+uv run vulture src/                             # Find unused code (functions, variables, imports)
+uv run vulture src/ tests/ --min-confidence 80  # Higher confidence threshold
+uv run ruff check . --select F811,F401,F841     # Unused imports (F401), variables (F841), redefined (F811)
+uv run autoflake --check -r src/                # Detect unused imports and variables
+uv run pip-audit                                # Check dependencies for known vulnerabilities
 ```
+
+These tools live in the opt-in `agents` dependency group: run `uv sync --group agents` first if they are missing.
 
 ## Workflow
 
@@ -43,7 +45,7 @@ For each item to remove:
 - Start with SAFE items only
 - Remove one category at a time: imports → variables → functions → files → duplicates
 - Run tests after each batch
-- Commit after each batch
+- Propose a commit after each batch, with a draft message — the user decides whether to commit
 
 ### 4. Consolidate Duplicates
 - Find duplicate functions/utilities
@@ -61,15 +63,15 @@ ruff check . --select F401
 ruff check . --select F841
 
 # Unused function arguments
-vulture src/ --min-confidence 60
+uv run vulture src/ --min-confidence 60
 
 # Unused dependencies in pyproject.toml
 # Compare installed packages vs actual imports
-pip list --format=freeze | cut -d= -f1 > installed.txt
+uv pip list --format=freeze | cut -d= -f1 > installed.txt
 grep -roh "^import \w\+\|^from \w\+" src/ | sort -u > used.txt
 
 # Auto-fix unused imports
-autoflake --in-place --remove-all-unused-imports -r src/
+uv run autoflake --in-place --remove-all-unused-imports -r src/
 ruff check . --select F401 --fix
 ```
 
@@ -86,7 +88,7 @@ Before removing:
 After each batch:
 - [ ] `ruff check .` passes
 - [ ] `pytest` passes
-- [ ] Committed with descriptive message
+- [ ] Commit proposed with a descriptive draft message
 
 ## Key Principles
 
@@ -94,7 +96,7 @@ After each batch:
 2. **Test often** — after every batch
 3. **Be conservative** — when in doubt, don't remove
 4. **Watch for dynamic usage** — Python's dynamic nature means `getattr()`, `importlib.import_module()`, and plugin registries can reference code without static imports
-5. **Document** — descriptive commit messages per batch
+5. **Document** — a descriptive draft commit message per batch
 6. **Never remove** during active feature development or before deploys
 
 ## When NOT to Use

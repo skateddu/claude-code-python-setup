@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Software architecture specialist for system design, scalability, and technical decision-making. Use PROACTIVELY when planning new features, refactoring large systems, or making architectural decisions.
+description: Software architecture specialist for system design, scalability, and technical decision-making. Use PROACTIVELY when a decision changes the system's structure — new services or data stores, integration patterns, large refactors — and to record it as an ADR. For a step-by-step implementation plan of a feature, use planner instead.
 tools: ["Read", "Grep", "Glob"]
 model: opus
 ---
@@ -122,7 +122,7 @@ Watch for these architectural anti-patterns:
 
 ## Reference Stack
 
-The default infrastructure stack is defined in `CLAUDE.md` (section "Default Infrastructure Stack"). Refer to it for technology choices and rationale. Do not duplicate the table here.
+The default infrastructure stack is defined in `CLAUDE.md` (section "Tech Stack"). Refer to it for technology choices and rationale. Do not duplicate the table here.
 
 ### Scalability Milestones
 

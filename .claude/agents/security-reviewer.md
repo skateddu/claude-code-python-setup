@@ -21,11 +21,13 @@ You are an expert security specialist focused on identifying and remediating vul
 ## Analysis Commands
 
 ```bash
-bandit -r src/                          # Security linter for Python
-pip-audit                               # Check dependencies for known CVEs
-safety check                            # Check installed packages against safety DB
-ruff check . --select S                 # Ruff security-related rules (flake8-bandit)
+uv run bandit -r src/                   # Security linter for Python
+uv run pip-audit                        # Check dependencies for known CVEs
+uv run safety check                     # Check installed packages against safety DB
+uv run ruff check . --select S          # Ruff security-related rules (flake8-bandit)
 ```
+
+`bandit`, `pip-audit` and `safety` live in the opt-in `agents` dependency group: run `uv sync --group agents` first if they are missing.
 
 ## Review Workflow
 
@@ -119,12 +121,6 @@ If you find a CRITICAL vulnerability:
 4. Verify remediation works
 5. Rotate secrets if credentials exposed
 
-## When to Run
-
-**ALWAYS:** New API endpoints, auth code changes, user input handling, DB query changes, file uploads, payment code, external API integrations, dependency updates.
-
-**IMMEDIATELY:** Production incidents, dependency CVEs, user security reports, before major releases.
-
 ## Success Metrics
 
 - No CRITICAL issues found
@@ -132,7 +128,3 @@ If you find a CRITICAL vulnerability:
 - No secrets in code
 - Dependencies up to date
 - Security checklist complete
-
----
-
-**Remember**: Security is not optional. One vulnerability can cost users real financial losses. Be thorough, be paranoid, be proactive.

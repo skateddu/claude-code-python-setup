@@ -1,15 +1,14 @@
 ---
-allowed-tools: Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(echo:*),Read,Glob,Grep,WebFetch
+allowed-tools: Read,Glob,Grep
+argument-hint: <notebooks or scripts to review>
 description: Comprehensive review of Jupyter notebooks and Python scripts
 ---
 
-**IMPORTANT**: Only review the files explicitly listed in the prompt above. Do not search for or review additional files.
+Review these Jupyter notebooks and Python scripts: $ARGUMENTS
 
-Review the specified Jupyter notebooks and Python scripts using the Notebook review skill.
+Review only the files listed; the user scoped the request, and neighbouring files may be work in progress.
 
 Provide a clear summary with:
 - ✅ What looks good
 - ⚠️ Suggestions for improvement
 - ❌ Critical issues that must be fixed
-
-**IMPORTANT: Post your review as a comment on the pull request using the command: `gh pr comment $PR_NUMBER --body "your review"`**
