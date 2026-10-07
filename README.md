@@ -228,6 +228,7 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | Claude Code | `20` | How many subagents may run at once before `Agent` spawns start failing. Requires Claude Code v2.1.217+ ([docs](https://code.claude.com/docs/en/sub-agents)) |
 | `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` | Claude Code | `200` | WebSearch calls allowed per session, counted across the main conversation **and every subagent**, so parallel research fan-outs draw on the same budget. Accepts a positive whole number — the cap can be raised but not turned off; `/clear` resets the count. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/tools-reference)) |
 | `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | Claude Code | `120000` (2 min) | How long a main-conversation MCP tool call may run before it moves to a background task instead of blocking the session. Set `0` to disable auto-backgrounding. Calls from subagents are never backgrounded. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/mcp)) |
+| `CLAUDE_CODE_DISABLE_WEB_FETCH` | Claude Code | unset (enabled) | Set to `1` to turn off the WebFetch tool, for example where Claude must not reach arbitrary URLs. Requires v2.1.285+ |
 
 ### 4. Verify MCP servers
 
@@ -369,10 +370,11 @@ These rules are enforced at the system level — Claude cannot bypass them regar
 
 > The label and the value differ: in the `Shift+Tab` cycle this mode appears as **"Manual"**, not "default" — in the CLI, the VS Code and JetBrains extensions, and the desktop app. `"default"` is the canonical value in `settings.json`; `"manual"` is accepted as an alias on Claude Code v2.1.200+.
 
-Two related settings are intentionally **not** set here, since they have no neutral value that preserves default behavior while being explicit — adding them would itself be a behavior change:
+Three related settings are intentionally **not** set here, since they have no neutral value that preserves default behavior while being explicit — adding them would itself be a behavior change:
 
 - `permissions.disableAutoMode: "disable"` — permanently removes `auto` from the `Shift+Tab` mode cycle; there's no value that means "keep auto mode available" other than omitting the key.
 - `language: "italian"` (or any language name) — pins Claude's response language, voice dictation, and terminal tab title generation to that language; omitting it lets Claude follow the conversation's language.
+- `attribution` — hides or changes the `Co-authored-by` trailer Claude Code adds to commits and the attribution line in pull request descriptions. `"attribution": false` hides both, but Claude Code versions older than the one that introduced it skip a settings file containing it entirely — hooks and permissions included. In a file shared across a team, use the object form instead: `"attribution": {"commit": false, "pr": false}`. Omitting the key keeps the standard attribution. Replaces the deprecated `includeCoAuthoredBy`.
 
 > Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
 
