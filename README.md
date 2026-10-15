@@ -145,6 +145,7 @@ claude-code-python-setup/
 │       └── xlsx/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/      # Bug report and feature request forms
+│   ├── dependabot.yml       # Weekly grouped bumps for Actions and uv deps
 │   ├── pull_request_template.md
 │   └── workflows/
 │       └── ci.yml           # Lint, shellcheck, hook tests on every PR
@@ -566,7 +567,7 @@ The script is written in Python and works cross-platform: Windows, macOS, and Li
 
 | Check | Catches |
 |-------|---------|
-| `ruff check` / `ruff format --check` | Lint and formatting on `.claude/statusline.py` and `tests/` (`src/**/*.py` is in scope for projects built from this template) |
+| `ruff check` / `ruff format --check` | Lint (rule sets `E`, `F`, `W`, `I`, `UP`, `B`, `SIM`) and formatting on `.claude/statusline.py` and `tests/` (`src/**/*.py` is in scope for projects built from this template) |
 | `shellcheck --severity=warning` | Shell quoting and syntax bugs in the hook scripts |
 | `pytest` | Hooks reaching the **wrong decision** — see below |
 
