@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **README.md**: a "Credits" section and a Source column in the agent, skill and command tables, crediting [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) (Apache-2.0) and [ECC](https://github.com/affaan-m/ECC) (MIT) alongside anthropics/skills. Most of `.claude/` was vendored from these projects, but only anthropics/skills was cited, and both licenses require keeping the attribution
+
+### Changed
+
+- **Skills**: re-synced the ECC skills (upstream `b92f181`) and the claude-plugins-official skills (upstream `8f814f4`), which had not been updated since the initial import. Taken: the "Use when…" trigger clauses in every ECC description, `origin` moved under `metadata` (the Agent Skills spec has no top-level `origin` field), magic-byte upload validation in `django-security` in place of the extension-only check that accepted a renamed executable, a placeholder in place of a realistic-looking API key in `api-design`, and the Convex MCP entries in `claude-automation-recommender`. Left out: the Kysely section in `database-migrations` (TypeScript only), the installer-harness section in `docker-patterns` (specific to ECC's own repository), and the `postgres-patterns` links to skills not vendored here. The local uv/ruff adaptations in `deployment-patterns` and `django-verification` and the `CLAUDE.local.md` fix in `claude-md-improver` are kept
+
 ### Fixed
 
 - **mcp-builder skill** (`scripts/evaluation.py`, `reference/evaluation.md`): the default model was `claude-3-7-sonnet-20250219`, retired on 2026-02-19, so running the evaluation script without `--model` used a retired id. Default is now `claude-sonnet-5-5`, and the examples point to `claude-opus-5-5` instead of the also-retired `claude-3-5-sonnet-20241022`. Upstream `anthropics/skills` still ships the old ids, so a future re-sync would bring them back (#22)

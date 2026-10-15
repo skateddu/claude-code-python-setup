@@ -1,7 +1,8 @@
 ---
 name: django-verification
-description: "Verification loop for Django projects: migrations, linting, tests with coverage, security scans, and deployment readiness checks before release or PR."
-origin: ECC
+description: Run the full Django verification loop — environment check, mypy and ruff checks, migration safety, pytest with coverage targets, pip-audit and bandit security scans, settings and logging review, and diff review — producing a phased pass/fail report before release or PR. Use when preparing a Django pull request, validating migrations or coverage, or running pre-deploy readiness checks.
+metadata:
+  origin: ECC
 ---
 
 # Django Verification Loop
@@ -352,7 +353,7 @@ Phase 12: Diff Review
   ✓ No hardcoded secrets
   ✓ Migrations included
 
-RECOMMENDATION: ⚠️ Fix pip-audit vulnerabilities before deploying
+RECOMMENDATION: WARNING: Fix pip-audit vulnerabilities before deploying
 
 NEXT STEPS:
 1. Update vulnerable dependencies

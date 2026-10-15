@@ -1,20 +1,13 @@
 ---
 name: docker-patterns
-description: Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration.
-origin: ECC
+description: Docker and Docker Compose patterns for local development, container security, networking, volumes, and multi-service orchestration. Use when creating or reviewing Dockerfiles and Compose services, or troubleshooting container networking or volumes.
+metadata:
+  origin: ECC
 ---
 
 # Docker Patterns
 
 Docker and Docker Compose best practices for containerized development.
-
-## When to Activate
-
-- Setting up Docker Compose for local development
-- Designing multi-container architectures
-- Troubleshooting container networking or volume issues
-- Reviewing Dockerfiles for security and size
-- Migrating from local dev to containerized workflow
 
 ## Docker Compose for Local Development
 
