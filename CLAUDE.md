@@ -1,6 +1,6 @@
 ## Project Specifications
 
-- **Operating System**: <YOUR_OPERATIVE_SYSTEM>
+- **Operating System**: <YOUR_OPERATING_SYSTEM>
 - **Programming Language**: Python >= 3.10
 - **Package Manager**: uv
 - **Linter & Formatter**: ruff
@@ -74,9 +74,18 @@ uv run ruff check . --fix           # Lint + auto-fix
 uv run ruff format .                # Format
 ```
 
+## Hooks
+
+Hooks in `.claude/settings.json` enforce part of this file automatically. Work with them, not around them:
+
+- **Bare tools are blocked**: `python`, `pip`, `pytest`, `ruff`, `mypy`, `bandit` must run through `uv run` (or `uv add` for installs)
+- **Python files are formatted on every Edit/Write** (`ruff check --fix` + `ruff format`): no need to format manually
+- **Verification runs when you stop**: `ruff check` and `pytest -x` run at the end of each turn, and a failure sends you back to fix it
+- **Destructive commands are blocked**: force push (use `--force-with-lease`), push to `main`/`master`, `git reset --hard`, broad `rm -rf`
+
 ## Verification
 
-Run after code changes to verify correctness:
+The Stop hook already runs lint and tests at the end of each turn; run them yourself only to check mid-task:
 
 ```bash
 uv run ruff check . && uv run ruff format --check . && uv run pytest -x
