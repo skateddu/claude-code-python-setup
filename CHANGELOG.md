@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-15
+
 ### Added
 
 - **Dependabot** (`.github/dependabot.yml`): weekly grouped updates for GitHub Actions and the `uv` dependencies. `setup-uv` no longer publishes floating major tags, so the CI pin had no other way to stay current
