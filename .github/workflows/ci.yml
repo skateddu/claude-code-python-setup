@@ -23,7 +23,7 @@ jobs:
       - name: Install uv
         # setup-uv stopped publishing floating major tags after v7, so this
         # pins the full version; actions/checkout still maintains a v7 tag.
-        uses: astral-sh/setup-uv@v10.0.0
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
 

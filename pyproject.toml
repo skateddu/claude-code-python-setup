@@ -60,7 +60,7 @@ include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py", ".claude/statusline
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
-select = ["E", "F", "W", "I", "UP"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = []
 
 [tool.ruff.lint.isort]
