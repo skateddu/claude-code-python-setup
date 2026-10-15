@@ -619,8 +619,8 @@ Most agents, skills and commands in `.claude/` are not original to this template
 | Source | License | What comes from it | Last synced |
 |--------|---------|--------------------|-------------|
 | [anthropics/skills][src-skills] | see each skill's `LICENSE.txt` | 10 skills: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx` | `683bc88` (2026-10-07) |
-| [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | initial import (2026-03-20) |
-| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | initial import (2026-03-20) |
+| [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | skills: `8f814f4` (2026-10-15); agents and commands: initial import (2026-03-20) |
+| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | skills: `b92f181` (2026-10-12); agents and commands: initial import (2026-03-20) |
 
 Where a component exists in both upstreams, the Anthropic copy is the one vendored — except `code-reviewer`, which shares only its name with the Anthropic agents and comes from ECC. `/notebook-review` is the only component written for this template.
 
