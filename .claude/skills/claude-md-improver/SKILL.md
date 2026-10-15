@@ -14,27 +14,31 @@ Audit, evaluate, and improve CLAUDE.md files across a codebase to ensure Claude 
 
 ### Phase 1: Discovery
 
-Find all CLAUDE.md files in the repository:
+Find all instruction files in the repository, skipping dependency and VCS directories:
 
 ```bash
-find . -name "CLAUDE.md" -o -name "CLAUDE.local.md" 2>/dev/null | head -50
+find . \( -name node_modules -o -name .venv -o -name .git \) -prune -o \
+  \( -name "CLAUDE.md" -o -name "CLAUDE.local.md" -o -name "AGENTS.md" -o -path "*/.claude/rules/*.md" \) -print \
+  2>/dev/null | head -50
 ```
 
 **File Types & Locations:**
 
 | Type | Location | Purpose |
 |------|----------|---------|
-| Project root | `./CLAUDE.md` | Primary project context (checked into git, shared with team) |
+| Project root | `./CLAUDE.md` or `./.claude/CLAUDE.md` | Primary project context (checked into git, shared with team) |
+| Rules | `./.claude/rules/**/*.md` | Topic-specific instructions; loaded at launch, or only for matching files when the rule has `paths:` frontmatter |
 | Local overrides | `./CLAUDE.local.md` | Personal/local settings (gitignored, not shared) |
-| Global defaults | `~/.claude/CLAUDE.md` | User-wide defaults across all projects |
+| Global defaults | `~/.claude/CLAUDE.md`, `~/.claude/rules/` | User-wide defaults across all projects |
 | Package-specific | `./packages/*/CLAUDE.md` | Module-level context in monorepos |
-| Subdirectory | Any nested location | Feature/domain-specific context |
+| Subdirectory | Any nested location | Feature/domain-specific context, loaded when Claude works in that directory |
+| AGENTS.md | `./AGENTS.md` | Read in place of CLAUDE.md only when no CLAUDE.md or CLAUDE.local.md exists on the path |
 
-**Note:** Claude auto-discovers CLAUDE.md files in parent directories, making monorepo setups work automatically.
+**Note:** Claude loads CLAUDE.md files from the working directory and every parent directory, making monorepo setups work automatically. Follow `@path` imports inside CLAUDE.md: imported files are part of the instructions and should be assessed with it.
 
 ### Phase 2: Quality Assessment
 
-For each CLAUDE.md file, evaluate against quality criteria. See [references/quality-criteria.md](references/quality-criteria.md) for detailed rubrics.
+For each CLAUDE.md file, evaluate against quality criteria. See [references/quality-criteria.md](references/quality-criteria.md) for detailed rubrics. Read the rules files and imports alongside it, and flag instructions that contradict each other across files: Claude may follow either one.
 
 **Quick Assessment Checklist:**
 
@@ -154,11 +158,12 @@ See [references/templates.md](references/templates.md) for CLAUDE.md templates b
 
 When presenting recommendations, remind users:
 
-- **`#` key shortcut**: During a Claude session, press `#` to have Claude auto-incorporate learnings into CLAUDE.md
+- **`/memory`**: Lists and opens the CLAUDE.md, CLAUDE.local.md and other memory files; `/context` shows which ones actually loaded
 - **Keep it concise**: CLAUDE.md should be human-readable; dense is better than verbose
 - **Actionable commands**: All documented commands should be copy-paste ready
 - **Use `CLAUDE.local.md`**: For personal preferences not shared with team (add to `.gitignore`)
 - **Global defaults**: Put user-wide preferences in `~/.claude/CLAUDE.md`
+- **Split by topic**: Move long, topic-specific sections into `.claude/rules/`, scoped with `paths:` when they only apply to some files
 
 ## What Makes a Great CLAUDE.md
 
