@@ -441,21 +441,21 @@ Key characteristics:
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
 
-| Agent | Description |
-|-------|-------------|
-| **architect** | System design, ADRs, trade-off analysis, scalability planning |
-| **code-architect** | Implementation blueprints: file plans, data flow, build sequence |
-| **code-explorer** | Codebase tracing: execution paths, architecture mapping, dependency analysis |
-| **code-reviewer** | Code quality, Python patterns, concurrency, FastAPI/Django/Flask checks |
-| **comment-analyzer** | Code comment accuracy, completeness, and comment rot detection |
-| **database-reviewer** | PostgreSQL schema, query optimization, and migration review |
-| **planner** | Task decomposition and implementation planning |
-| **pr-test-analyzer** | Test coverage quality: behavioral gaps, critical paths, edge cases |
-| **refactor-cleaner** | Dead code detection, refactoring (vulture, ruff) |
-| **security-reviewer** | Security audit (bandit, safety, pip-audit, OWASP Top 10) |
-| **silent-failure-hunter** | Error handling audit: silent failures, catch blocks, fallback behavior |
-| **tdd-guide** | Test-driven development with pytest |
-| **type-design-analyzer** | Type design quality: encapsulation, invariants, enforcement ratings |
+| Agent | Description | Source |
+|-------|-------------|--------|
+| **architect** | System design, ADRs, trade-off analysis, scalability planning | [ECC][src-ecc] (adapted) |
+| **code-architect** | Implementation blueprints: file plans, data flow, build sequence | [claude-plugins-official][src-official] |
+| **code-explorer** | Codebase tracing: execution paths, architecture mapping, dependency analysis | [claude-plugins-official][src-official] |
+| **code-reviewer** | Code quality, Python patterns, concurrency, FastAPI/Django/Flask checks | [ECC][src-ecc] (adapted) |
+| **comment-analyzer** | Code comment accuracy, completeness, and comment rot detection | [claude-plugins-official][src-official] |
+| **database-reviewer** | PostgreSQL schema, query optimization, and migration review | [ECC][src-ecc] |
+| **planner** | Task decomposition and implementation planning | [ECC][src-ecc] |
+| **pr-test-analyzer** | Test coverage quality: behavioral gaps, critical paths, edge cases | [claude-plugins-official][src-official] |
+| **refactor-cleaner** | Dead code detection, refactoring (vulture, ruff) | [ECC][src-ecc] (adapted) |
+| **security-reviewer** | Security audit (bandit, safety, pip-audit, OWASP Top 10) | [ECC][src-ecc] (adapted) |
+| **silent-failure-hunter** | Error handling audit: silent failures, catch blocks, fallback behavior | [claude-plugins-official][src-official] |
+| **tdd-guide** | Test-driven development with pytest | [ECC][src-ecc] (adapted) |
+| **type-design-analyzer** | Type design quality: encapsulation, invariants, enforcement ratings | [claude-plugins-official][src-official] |
 
 ### Skills (`.claude/skills/`)
 
@@ -476,36 +476,36 @@ Key characteristics:
 
 > Full documentation: [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills)
 
-Ten of the skills below are **vendored from [anthropics/skills](https://github.com/anthropics/skills)** rather than written for this template: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx`. They are copies, so they don't update themselves — re-sync them from upstream periodically, especially `claude-api`, which pins the model IDs Claude will reach for. Last synced from upstream `683bc88` (2026-10-07).
+None of the skills below were written for this template: each one is **vendored** from [anthropics/skills](https://github.com/anthropics/skills), [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) or [ECC](https://github.com/affaan-m/ECC), as the Source column shows — see [Credits](#credits). They are copies, so they don't update themselves — re-sync them from upstream periodically, especially `claude-api`, which pins the model IDs Claude will reach for.
 
 Upstream's other skills (`academy-guide`, `discernment-nudge`, `algorithmic-art`, `canvas-design`, `brand-guidelines`, `internal-comms`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`) are deliberately not vendored: they fall outside Python development, and every installed skill's description costs context in every session.
 
 Every skill here is loaded whether a project uses it or not. Run `/skill-doctor` after a few sessions to see which skills go unused and what each costs in context, then delete the directories your project doesn't need — the Django and Office-document skills are the usual candidates in a FastAPI project.
 
-| Skill | Description |
-|-------|-------------|
-| **api-design** | REST API design: resource naming, status codes, pagination, versioning |
-| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration, cost optimization, evals, Python SDK 0.x → 1.x upgrade |
-| **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) |
-| **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates |
-| **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) |
-| **deployment-patterns** | CI/CD pipelines, rolling/blue-green deployments, health checks, production readiness |
-| **django-patterns** | Django architecture, DRF, ORM best practices, caching, signals, middleware |
-| **django-security** | Django security: authentication, CSRF/XSS prevention, secure configuration |
-| **django-tdd** | TDD with pytest-django, factory_boy, model/view/serializer testing |
-| **django-verification** | Django pre-deployment verification: migrations, tests, security scans |
-| **doc-coauthoring** | Structured documentation co-authoring workflow |
-| **docker-patterns** | Docker/Compose: multi-container orchestration, networking, security hardening |
-| **docx** | Word document and `.dotx` template creation and manipulation |
-| **frontend-design** | Visual design direction for new or reshaped UI: aesthetics, typography, avoiding templated defaults |
-| **mcp-builder** | Guide for creating MCP servers |
-| **pdf** | PDF reading, merging, splitting, OCR |
-| **playground** | Interactive HTML playgrounds: visual controls, live preview, prompt output |
-| **postgres-patterns** | PostgreSQL query optimization, schema design, indexing, RLS, connection pooling |
-| **pptx** | PowerPoint presentation and `.potx` template creation |
-| **skill-creator** | Create and optimize skills, run evals, benchmark triggering accuracy |
-| **webapp-testing** | Web app testing with Playwright |
-| **xlsx** | Spreadsheet creation and manipulation |
+| Skill | Description | Source |
+|-------|-------------|--------|
+| **api-design** | REST API design: resource naming, status codes, pagination, versioning | [ECC][src-ecc] |
+| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration, cost optimization, evals, Python SDK 0.x → 1.x upgrade | [anthropics/skills][src-skills] |
+| **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) | [claude-plugins-official][src-official] |
+| **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates | [claude-plugins-official][src-official] (adapted) |
+| **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) | [ECC][src-ecc] |
+| **deployment-patterns** | CI/CD pipelines, rolling/blue-green deployments, health checks, production readiness | [ECC][src-ecc] (adapted) |
+| **django-patterns** | Django architecture, DRF, ORM best practices, caching, signals, middleware | [ECC][src-ecc] |
+| **django-security** | Django security: authentication, CSRF/XSS prevention, secure configuration | [ECC][src-ecc] |
+| **django-tdd** | TDD with pytest-django, factory_boy, model/view/serializer testing | [ECC][src-ecc] |
+| **django-verification** | Django pre-deployment verification: migrations, tests, security scans | [ECC][src-ecc] (adapted) |
+| **doc-coauthoring** | Structured documentation co-authoring workflow | [anthropics/skills][src-skills] |
+| **docker-patterns** | Docker/Compose: multi-container orchestration, networking, security hardening | [ECC][src-ecc] |
+| **docx** | Word document and `.dotx` template creation and manipulation | [anthropics/skills][src-skills] |
+| **frontend-design** | Visual design direction for new or reshaped UI: aesthetics, typography, avoiding templated defaults | [anthropics/skills][src-skills] |
+| **mcp-builder** | Guide for creating MCP servers | [anthropics/skills][src-skills] |
+| **pdf** | PDF reading, merging, splitting, OCR | [anthropics/skills][src-skills] |
+| **playground** | Interactive HTML playgrounds: visual controls, live preview, prompt output | [claude-plugins-official][src-official] |
+| **postgres-patterns** | PostgreSQL query optimization, schema design, indexing, RLS, connection pooling | [ECC][src-ecc] |
+| **pptx** | PowerPoint presentation and `.potx` template creation | [anthropics/skills][src-skills] |
+| **skill-creator** | Create and optimize skills, run evals, benchmark triggering accuracy | [anthropics/skills][src-skills] |
+| **webapp-testing** | Web app testing with Playwright | [anthropics/skills][src-skills] |
+| **xlsx** | Spreadsheet creation and manipulation | [anthropics/skills][src-skills] |
 
 ### Commands (`.claude/commands/`)
 
@@ -515,18 +515,18 @@ Skills are the recommended format because they support additional features (supp
 
 > Full documentation: [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills)
 
-| Command | Description |
-|---------|-------------|
-| `/build-fix` | Incremental build/type error fixing with guardrails |
-| `/clean-gone` | Clean up stale local branches marked as [gone] and their worktrees |
-| `/commit` | Stage and create a git commit with contextual message |
-| `/commit-push-pr` | One-command workflow: branch → commit → push → PR creation |
-| `/feature-dev` | Guided 7-phase feature development with codebase exploration and architecture design |
-| `/notebook-review` | Review Jupyter notebooks |
-| `/orchestrate` | Multi-agent workflow: planner → tdd-guide → code-reviewer → security-reviewer |
-| `/review-pr` | Interactive PR review with formal GitHub decision (approve/request changes/comment) |
-| `/revise-claude-md` | Capture session learnings and update CLAUDE.md |
-| `/test-coverage` | Analyze coverage gaps, generate missing tests for 80%+ target |
+| Command | Description | Source |
+|---------|-------------|--------|
+| `/build-fix` | Incremental build/type error fixing with guardrails | [ECC][src-ecc] |
+| `/clean-gone` | Clean up stale local branches marked as [gone] and their worktrees | [claude-plugins-official][src-official] |
+| `/commit` | Stage and create a git commit with contextual message | [claude-plugins-official][src-official] |
+| `/commit-push-pr` | One-command workflow: branch → commit → push → PR creation | [claude-plugins-official][src-official] |
+| `/feature-dev` | Guided 7-phase feature development with codebase exploration and architecture design | [claude-plugins-official][src-official] |
+| `/notebook-review` | Review Jupyter notebooks | this template |
+| `/orchestrate` | Multi-agent workflow: planner → tdd-guide → code-reviewer → security-reviewer | [ECC][src-ecc] (adapted) |
+| `/review-pr` | Interactive PR review with formal GitHub decision (approve/request changes/comment) | [claude-plugins-official][src-official] (adapted) |
+| `/revise-claude-md` | Capture session learnings and update CLAUDE.md | [claude-plugins-official][src-official] |
+| `/test-coverage` | Analyze coverage gaps, generate missing tests for 80%+ target | [ECC][src-ecc] |
 
 ### MCP Servers (`.mcp.json`)
 
@@ -611,6 +611,22 @@ Contributions are welcome! If you have ideas for new agents, skills, rules, or i
 4. Submit a Pull Request with a clear description of what you added or changed
 
 For bug reports or suggestions, open an [issue](https://github.com/skateddu/claude-code-python-setup/issues).
+
+## Credits
+
+Most agents, skills and commands in `.claude/` are not original to this template. They come from the projects below, whose authors deserve the credit for them. "Adapted" in the Source columns means the file was substantially rewritten here — typically ported to Python, `uv` and `ruff` — while the rest are copies with at most small local edits.
+
+| Source | License | What comes from it | Last synced |
+|--------|---------|--------------------|-------------|
+| [anthropics/skills][src-skills] | see each skill's `LICENSE.txt` | 10 skills: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx` | `683bc88` (2026-10-07) |
+| [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | initial import (2026-03-20) |
+| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | initial import (2026-03-20) |
+
+Where a component exists in both upstreams, the Anthropic copy is the one vendored — except `code-reviewer`, which shares only its name with the Anthropic agents and comes from ECC. `/notebook-review` is the only component written for this template.
+
+[src-skills]: https://github.com/anthropics/skills
+[src-official]: https://github.com/anthropics/claude-plugins-official
+[src-ecc]: https://github.com/affaan-m/ECC
 
 ## References
 

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **README.md**: a "Credits" section and a Source column in the agent, skill and command tables, crediting [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) (Apache-2.0) and [ECC](https://github.com/affaan-m/ECC) (MIT) alongside anthropics/skills. Most of `.claude/` was vendored from these projects, but only anthropics/skills was cited, and both licenses require keeping the attribution
+
 ## [1.4.0] - 2026-10-15
 
 ### Added
