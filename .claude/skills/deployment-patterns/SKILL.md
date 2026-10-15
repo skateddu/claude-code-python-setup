@@ -144,9 +144,11 @@ CMD ["/server"]
 
 ```dockerfile
 FROM python:3.12-slim AS builder
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /usr/local/bin/uv
 WORKDIR /app
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+# UV_PYTHON_DOWNLOADS=0 makes uv use the image's Python: a uv-downloaded one
+# would stay in the builder, leaving the copied .venv pointing at nothing
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
 # Dependencies first, from the lockfile, so this layer is cached until uv.lock changes
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
@@ -159,7 +161,8 @@ WORKDIR /app
 RUN useradd -r -u 1001 appuser
 USER appuser
 
-COPY --from=builder --chown=appuser /app /app
+# Root-owned, so the app user can read the code but not modify it
+COPY --from=builder /app /app
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 EXPOSE 8000
@@ -176,7 +179,7 @@ CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers
 - Multi-stage builds to minimize image size
 - Run as non-root user
 - Copy dependency files first (layer caching)
-- Use .dockerignore to exclude node_modules, .git, tests
+- Use .dockerignore to exclude .venv, node_modules, .git, tests (a host .venv copied into the image overrides the one built for it)
 - Add HEALTHCHECK instruction
 - Set resource limits in docker-compose or k8s
 
@@ -205,27 +208,26 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test -- --coverage
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest --cov=src --cov-report=xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
-          path: coverage/
+          path: coverage.xml
 
   build:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:

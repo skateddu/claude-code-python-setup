@@ -28,7 +28,7 @@ uv sync --locked
 uv pip list --outdated
 
 # Verify environment variables
-uv run python -c "import os; import environ; print('DJANGO_SECRET_KEY set' if os.environ.get('DJANGO_SECRET_KEY') else 'MISSING: DJANGO_SECRET_KEY')"
+uv run python -c "import os; print('DJANGO_SECRET_KEY set' if os.environ.get('DJANGO_SECRET_KEY') else 'MISSING: DJANGO_SECRET_KEY')"
 ```
 
 If environment is misconfigured, stop and fix.
@@ -115,21 +115,21 @@ Coverage targets:
 ## Phase 5: Security Scan
 
 ```bash
-# Dependency vulnerabilities
-pip-audit
-safety check --full-report
+# Dependency vulnerabilities (pip-audit needs no account; `safety check` is
+# deprecated and its replacement `safety scan` requires a Safety login)
+uv run pip-audit
 
 # Django security checks
-python manage.py check --deploy
+uv run python manage.py check --deploy
 
 # Bandit security linter
-bandit -r . -f json -o bandit-report.json
+uv run bandit -r . -f json -o bandit-report.json
 
 # Secret scanning (if gitleaks is installed)
 gitleaks detect --source . --verbose
 
-# Environment variable check
-python -c "from django.core.exceptions import ImproperlyConfigured; from django.conf import settings; settings.DEBUG"
+# DEBUG status, read through Django so the settings module is loaded
+uv run python manage.py shell -c "from django.conf import settings; print('DEBUG =', settings.DEBUG)"
 ```
 
 Report:
@@ -142,19 +142,16 @@ Report:
 
 ```bash
 # Check for model issues
-python manage.py check
+uv run python manage.py check
 
 # Collect static files
-python manage.py collectstatic --noinput --clear
-
-# Create superuser (if needed for tests)
-echo "from apps.users.models import User; User.objects.create_superuser('admin@example.com', 'admin')" | python manage.py shell
+uv run python manage.py collectstatic --noinput --clear
 
 # Database integrity
-python manage.py check --database default
+uv run python manage.py check --database default
 
 # Cache verification (if using Redis)
-python -c "from django.core.cache import cache; cache.set('test', 'value', 10); print(cache.get('test'))"
+uv run python manage.py shell -c "from django.core.cache import cache; cache.set('verification', 'ok', 10); print(cache.get('verification'))"
 ```
 
 ## Phase 7: Performance Checks
@@ -164,14 +161,14 @@ python -c "from django.core.cache import cache; cache.set('test', 'value', 10); 
 # Run in dev mode with DEBUG=True and access a page
 # Look for duplicate queries in SQL panel
 
-# Query count analysis
-django-admin debugsqlshell  # If django-debug-sqlshell installed
+# Query count analysis (debugsqlshell is provided by django-debug-toolbar)
+uv run python manage.py debugsqlshell
 
-# Check for missing indexes
-python manage.py shell << EOF
+# List existing indexes (PostgreSQL)
+uv run python manage.py shell << EOF
 from django.db import connection
 with connection.cursor() as cursor:
-    cursor.execute("SELECT table_name, index_name FROM information_schema.statistics WHERE table_schema = 'public'")
+    cursor.execute("SELECT tablename, indexname FROM pg_indexes WHERE schemaname = 'public' ORDER BY tablename")
     print(cursor.fetchall())
 EOF
 ```
@@ -186,21 +183,20 @@ Report:
 ```bash
 # Check for npm dependencies (if using npm)
 npm audit
-npm audit fix
 
 # Build static files (if using webpack/vite)
 npm run build
 
 # Verify static files
 ls -la staticfiles/
-python manage.py findstatic css/style.css
+uv run python manage.py findstatic css/style.css
 ```
 
 ## Phase 9: Configuration Review
 
-```python
-# Run in Python shell to verify settings
-python manage.py shell << EOF
+```bash
+# Run in the Django shell to verify settings
+uv run python manage.py shell << EOF
 from django.conf import settings
 import os
 
@@ -224,26 +220,26 @@ EOF
 
 ```bash
 # Test logging output
-python manage.py shell << EOF
+uv run python manage.py shell << EOF
 import logging
 logger = logging.getLogger('django')
 logger.warning('Test warning message')
 logger.error('Test error message')
 EOF
 
-# Check log files (if configured)
-tail -f /var/log/django/django.log
+# Check the latest log entries (if configured); not `tail -f`, which never returns
+tail -n 50 /var/log/django/django.log
 ```
 
 ## Phase 11: API Documentation (if DRF)
 
 ```bash
 # Generate schema
-python manage.py generateschema --format openapi-json > schema.json
+uv run python manage.py generateschema --format openapi-json > schema.json
 
 # Validate schema
 # Check if schema.json is valid JSON
-python -c "import json; json.load(open('schema.json'))"
+uv run python -c "import json; json.load(open('schema.json'))"
 
 # Access Swagger UI (if using drf-yasg)
 # Visit http://localhost:8000/swagger/ in browser
@@ -285,7 +281,7 @@ DJANGO VERIFICATION REPORT
 
 Phase 1: Environment Check
   ✓ Python 3.11.5
-  ✓ Virtual environment active
+  ✓ Environment in sync with uv.lock
   ✓ All environment variables set
 
 Phase 2: Code Quality
@@ -310,7 +306,6 @@ Phase 4: Tests + Coverage
 
 Phase 5: Security Scan
   ✗ pip-audit: 2 vulnerabilities found (fix required)
-  ✓ safety check: No issues
   ✓ bandit: No security issues
   ✓ No secrets detected
   ✓ DEBUG = False
@@ -405,15 +400,15 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
 
       - name: Install dependencies
-        # Installs the default `dev` group plus the opt-in `agents` group (mypy, bandit, safety, pip-audit)
+        # Installs the default `dev` group plus the opt-in `agents` group (mypy, bandit, pip-audit)
         run: uv sync --locked --group agents
 
       - name: Code quality checks
@@ -425,7 +420,6 @@ jobs:
       - name: Security scan
         run: |
           uv run bandit -r . -f json -o bandit-report.json
-          uv run safety check --full-report
           uv run pip-audit
 
       - name: Run tests
@@ -436,7 +430,7 @@ jobs:
           uv run pytest --cov=apps --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v7
 ```
 
 ## Quick Reference
