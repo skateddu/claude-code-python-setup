@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **mcp-builder skill** (`scripts/evaluation.py`, `reference/evaluation.md`): the default model was `claude-3-7-sonnet-20250219`, retired on 2026-02-19, so running the evaluation script without `--model` used a retired id. Default is now `claude-sonnet-5-5`, and the examples point to `claude-opus-5-5` instead of the also-retired `claude-3-5-sonnet-20241022`. Upstream `anthropics/skills` still ships the old ids, so a future re-sync would bring them back (#22)
+
 ## [1.4.0] - 2026-10-15
 
 ### Added
