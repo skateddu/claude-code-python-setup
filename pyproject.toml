@@ -30,36 +30,28 @@ Repository = "https://github.com/skateddu/claude-code-python-setup"
 Issues = "https://github.com/skateddu/claude-code-python-setup/issues"
 Changelog = "https://github.com/skateddu/claude-code-python-setup/blob/main/CHANGELOG.md"
 
-# Dev tooling for the .claude setup. PEP 735 dependency groups — see
 # https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
 [dependency-groups]
-# Core: used by always-on hooks (auto-lint) and the CLAUDE.md verification flow.
-# Installed by default with `uv sync`; run via `uv run`.
 dev = [
-    "ruff",       # lint + format (auto-lint hook, enforce-uv hook, verification)
-    "pytest",     # test runner (verification, testing rule, [tool.pytest])
-    "pytest-cov", # coverage reporting (`uv run pytest --cov=src`, test-coverage command)
+    "ruff",
+    "pytest",
+    "pytest-cov",
 ]
-# Optional: only invoked by on-demand agents (security-reviewer, refactor-cleaner,
-# code-reviewer). Install when needed: `uv sync --group agents`.
 agents = [
-    "mypy",      # static type checking (code-reviewer agent, enforce-uv redirect)
-    "bandit",    # security linting (security-reviewer, code-reviewer agents)
-    "pip-audit", # dependency vulnerability audit (security-reviewer, refactor-cleaner)
-    "safety",    # dependency safety DB check (security-reviewer agent)
-    "vulture",   # dead-code detection (refactor-cleaner agent)
-    "autoflake", # unused import/variable removal (refactor-cleaner agent)
+    "mypy",
+    "bandit",
+    "pip-audit",
+    "safety",
+    "vulture",
+    "autoflake",
 ]
 
 [tool.ruff]
 line-length = 99
 src = ["src"]
-# src/** is for projects built from this template; the other two are the Python
-# this repo actually ships. Vendored .claude/skills/ scripts stay out of scope.
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py", ".claude/statusline.py"]
 
 [tool.ruff.lint]
-extend-select = ["I"]  # Add import sorting
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = []
 

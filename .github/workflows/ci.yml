@@ -21,8 +21,6 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install uv
-        # setup-uv stopped publishing floating major tags after v7, so this
-        # pins the full version; actions/checkout still maintains a v7 tag.
         uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
@@ -36,12 +34,8 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check .
 
-      # The hooks are the enforced guardrails, and shell quoting bugs in them
-      # have shipped before. Warning severity skips style nitpicks.
       - name: Shellcheck hooks
         run: shellcheck --severity=warning .claude/hooks/*.sh
 
-      # Runs each hook script for real against crafted payloads. shellcheck
-      # catches shell mistakes; these catch wrong decisions.
       - name: Test hook behaviour
         run: uv run pytest
