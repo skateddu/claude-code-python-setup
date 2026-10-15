@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **CLAUDE.md**: new "Hooks" section listing what the hooks enforce — bare `python`/`pip`/`pytest`/`ruff` blocked in favour of `uv run`, formatting on every edit, verification on stop, destructive git and `rm` commands blocked. Claude only learned these by being denied. "Verification" now says the Stop hook already runs lint and tests, so they are not run twice per turn
+- **CLAUDE.md** / **README.md**: placeholder renamed from `<YOUR_OPERATIVE_SYSTEM>` to `<YOUR_OPERATING_SYSTEM>`
 - **CI** (`.github/workflows/ci.yml`): `astral-sh/setup-uv` bumped from v10.0.0 to v10.3.0
 - **pyproject.toml** / **CI** (`.github/workflows/ci.yml`): removed explanatory comments; only the link to uv's dependency-groups docs remains. Dropped `extend-select = ["I"]`, already covered by `select`
 - **Skills** (`django-verification`, `deployment-patterns`): aligned with the template's toolchain, which they contradicted since the initial commit. `django-verification` formatted with black and sorted imports with isort, and its CI example installed from `requirements.txt` with `pip`; it now uses `ruff format` (import sorting is already covered by ruff's `I` rules), `uv run` for every tool, and `astral-sh/setup-uv` with `uv sync --locked --group agents` in CI. The `deployment-patterns` Dockerfile built from a `requirements.txt` the template never ships; it now installs from `pyproject.toml` and `uv.lock` with `uv sync --locked --no-dev`, in a dependencies-first layer, and runs from the project's `.venv`

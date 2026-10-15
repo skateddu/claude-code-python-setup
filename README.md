@@ -176,7 +176,7 @@ claude-code-python-setup/
 
 Copy the `.claude/` directory and `CLAUDE.md` into the root of your project.
 
-Then open `CLAUDE.md` and replace the `<YOUR_OPERATIVE_SYSTEM>` placeholder with your actual OS (e.g., `Windows 11`, `macOS 15`, `Ubuntu 24.04`).
+Then open `CLAUDE.md` and replace the `<YOUR_OPERATING_SYSTEM>` placeholder with your actual OS (e.g., `Windows 11`, `macOS 15`, `Ubuntu 24.04`).
 
 ### 2. Configure MCP servers
 
