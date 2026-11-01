@@ -37,7 +37,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "python3 .claude/statusline.py"
+    "command": "uv run --no-project python .claude/statusline.py"
   },
   "hooks": {
     "SessionStart": [
