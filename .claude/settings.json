@@ -127,6 +127,65 @@
             "if": "Bash(rm *)"
           }
         ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(python *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(python3 *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(pytest *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(ruff *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(mypy *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(bandit *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(pip *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(pip3 *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-main.sh",
+            "timeout": 10000,
+            "if": "PowerShell(git *)"
+          }
+        ]
       }
     ],
     "PostToolUse": [

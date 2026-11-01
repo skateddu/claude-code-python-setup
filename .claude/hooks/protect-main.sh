@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Bash): blocks dangerous git operations and destructive commands.
+# PreToolUse hook (Bash, PowerShell): blocks dangerous git operations and destructive commands.
 # Prevents accidental force pushes, direct pushes to main/master, and broad rm -rf.
 #
 # Requires: jq (https://jqlang.github.io/jq/)
@@ -18,13 +18,14 @@ deny() {
 
 input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command // empty')
+tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 
 [ -z "$command" ] && exit 0
 
 # Match against the code the shell will run, not against prose carried in a
-# heredoc body (a PR description quoting `rm -rf /` is not an invocation).
-scannable=$(printf '%s
-' "$command" | strip_heredoc_bodies)
+# heredoc or here-string body (a PR description quoting `rm -rf /` is not an
+# invocation).
+scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 
 # Block git push --force (suggest --force-with-lease)
 if echo "$scannable" | grep -qE 'git\s+push\s.*(-f\b|--force\b)' && ! echo "$scannable" | grep -qE -- '--force-with-lease'; then

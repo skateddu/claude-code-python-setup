@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **enforce-uv and protect-main hooks on Windows**: both were wired to the Bash tool only, so a `pip install`, `git push --force` or `git reset --hard` run through the PowerShell tool — the primary shell of a Windows session — skipped them, while `CLAUDE.md` and the README described those commands as blocked. `settings.json` now wires every guarded program for PowerShell as well (`rm` excepted: `rm -rf` is not valid PowerShell), and `hooks/lib/command-text.sh` strips PowerShell here-string bodies (`@'…'@`, `@"…"@`) the way it strips heredocs, so a commit message quoting a blocked command is not denied. PowerShell's own broad delete, `Remove-Item -Recurse -Force`, is not guarded yet
+
 - **Hook tests on Windows**: the `bash_executable` fixture resolved `bash` with a plain PATH lookup, which on Windows finds `C:\Windows\System32\bash.exe`, the WSL launcher, instead of Git Bash. Every hook run then failed with exit code 1 (66 of 79 tests locally) without WSL ever being asked for. The fixture now looks for Git for Windows' bash, the shell Claude Code runs hooks with: `CLAUDE_CODE_GIT_BASH_PATH` first, then the `bin/bash.exe` next to `git`, then any bash on PATH except the launcher
 
 ### Added

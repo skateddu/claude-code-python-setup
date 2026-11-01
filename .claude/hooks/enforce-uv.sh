@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Bash): blocks bare Python tool commands and suggests uv equivalents.
+# PreToolUse hook (Bash, PowerShell): blocks bare Python tool commands and suggests uv equivalents.
 # Ensures all Python tooling runs through uv's managed environment.
 #
 # Requires: jq (https://jqlang.github.io/jq/)
@@ -26,12 +26,13 @@ allow_rewrite() {
 
 input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command // empty')
+tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 
 [ -z "$command" ] && exit 0
 
 # Match against the code the shell will run, not against prose carried in a
-# heredoc body. Rewrites below still emit the original, unmodified command.
-scannable=$(printf '%s\n' "$command" | strip_heredoc_bodies)
+# heredoc or here-string body. Rewrites below still emit the original command.
+scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 
 # Skip if already using uv
 [[ "$scannable" == *"uv run"* || "$scannable" == *"uv add"* || "$scannable" == *"uv remove"* || "$scannable" == *"uv sync"* || "$scannable" == *"uv pip"* || "$scannable" == *"uvx "* ]] && exit 0

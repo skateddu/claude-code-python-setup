@@ -94,6 +94,22 @@ def bash_payload(command: str) -> dict[str, Any]:
     return {"tool_name": "Bash", "tool_input": {"command": command}}
 
 
+def powershell_payload(command: str) -> dict[str, Any]:
+    """Build the `PreToolUse` payload Claude Code sends for a PowerShell call.
+
+    Parameters
+    ----------
+    command
+        The PowerShell command Claude proposed to run.
+
+    Returns
+    -------
+    dict[str, Any]
+        Payload shaped like the real hook input.
+    """
+    return {"tool_name": "PowerShell", "tool_input": {"command": command}}
+
+
 def edit_payload(file_path: str) -> dict[str, Any]:
     """Build the `PostToolUse` payload Claude Code sends after an Edit or Write.
 
