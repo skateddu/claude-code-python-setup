@@ -82,6 +82,8 @@ Hooks in `.claude/settings.json` enforce part of this file automatically. Work w
 - **Python files are formatted on every Edit/Write** (`ruff check --fix` + `ruff format`): no need to format manually
 - **Verification runs when you stop**: `ruff check` and `pytest -x` run at the end of each turn, and a failure sends you back to fix it
 - **Destructive commands are blocked**: force push (use `--force-with-lease`), push to `main`/`master`, `git reset --hard`, broad `rm -rf` / `Remove-Item -Recurse`
+- **Guards fail closed**: if a guard can't run (for example `jq` is missing), the command is blocked with the hook's error. Fix the cause and report it; don't route around the guard
+- **Guards read the command text, not its quoting**: a tool name inside a pattern or argument (`grep -E 'pytest|ruff'`, `-m "drop rm -rf ."`) can be denied as if it ran. Put such text in a script file or a heredoc body, which the guards skip
 
 ## Verification
 

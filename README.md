@@ -48,6 +48,8 @@ claude --version
 claude doctor     # detailed check
 ```
 
+**Minimum version: v2.1.295.** The guard hooks set `"onFailure": "block"`, introduced in that release, so that a guard which can't run blocks the command instead of letting it through (see [Hooks](#hooks-claudehooks)). Features noted with a later version elsewhere in this README are optional.
+
 > Full documentation: [code.claude.com/docs/en/setup](https://code.claude.com/docs/en/setup)
 
 ### Optional Dependencies
@@ -231,6 +233,10 @@ setx CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 85
 | `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` | Claude Code | `200` | WebSearch calls allowed per session, counted across the main conversation **and every subagent**, so parallel research fan-outs draw on the same budget. Accepts a positive whole number — the cap can be raised but not turned off; `/clear` resets the count. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/tools-reference)) |
 | `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | Claude Code | `120000` (2 min) | How long a main-conversation MCP tool call may run before it moves to a background task instead of blocking the session. Set `0` to disable auto-backgrounding. Calls from subagents are never backgrounded. Requires v2.1.212+ ([docs](https://code.claude.com/docs/en/mcp)) |
 | `CLAUDE_CODE_DISABLE_WEB_FETCH` | Claude Code | unset (enabled) | Set to `1` to turn off the WebFetch tool, for example where Claude must not reach arbitrary URLs. Requires v2.1.285+ |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | Claude Code | unset | How full the context gets before auto-compaction, from `100000` to `1000000` tokens. Suffixed values such as `200k` need v2.1.304+ (earlier, `200k` silently set a 100K window). A subagent's `autoCompactWindow` can lower it for that agent ([docs](https://code.claude.com/docs/en/model-config#set-the-auto-compact-window)) |
+| `CLAUDE_CODE_SUBAGENT_EFFORT` | Claude Code | unset | Effort level for subagents when nothing else sets one: an agent's `effort` frontmatter or an Agent call's `effort` take precedence, and `CLAUDE_CODE_EFFORT_LEVEL` overrides everything. Lower it to make delegated work cheaper. Requires v2.1.316+ |
+| `CLAUDE_CODE_DISABLE_FILE_MENTIONS` | Claude Code | unset | Set to `1` to stop expanding `@` mentions of files and directories: Claude gets the paths with a note to read them with its file tools. Ignored in project and local settings. Requires v2.1.299+ ([docs](https://code.claude.com/docs/en/env-vars)) |
+| `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` | Claude Code | `200000` | Context size at which idle compaction applies to a conversation left idle for about 54 minutes; values below `100000` are raised to it. Idle compaction is on by default; turn it off with `"idleCompaction": false` in `settings.json`. Requires v2.1.290+ ([docs](https://code.claude.com/docs/en/env-vars)) |
 
 ### 4. Verify MCP servers
 
@@ -383,6 +389,22 @@ Three related settings are intentionally **not** set here, since they have no ne
 - `language: "italian"` (or any language name) — pins Claude's response language, voice dictation, and terminal tab title generation to that language; omitting it lets Claude follow the conversation's language.
 - `attribution` — hides or changes the `Co-authored-by` trailer Claude Code adds to commits and the attribution line in pull request descriptions. `"attribution": false` hides both, but Claude Code versions older than the one that introduced it skip a settings file containing it entirely — hooks and permissions included. In a file shared across a team, use the object form instead: `"attribution": {"commit": false, "pr": false}`. Omitting the key keeps the standard attribution. Replaces the deprecated `includeCoAuthoredBy`.
 
+**Opt-in hardening, not enabled here** — two booleans under `permissions` confine Claude's file tools to the working directories (the project plus any `--add-dir` / `additionalDirectories`):
+
+```json
+{
+  "permissions": {
+    "blockWritesOutsideWorkingDirectories": true,
+    "blockReadsOutsideWorkingDirectories": true
+  }
+}
+```
+
+- `blockWritesOutsideWorkingDirectories` (v2.1.314+) makes Write, Edit and NotebookEdit refuse a path outside the working directories in **every** permission mode. In the default mode that turns today's permission prompt into a refusal; the real gain is in `auto` and `bypassPermissions`, where such an edit can otherwise go through unasked.
+- `blockReadsOutsideWorkingDirectories` does the same for reads. In `auto` mode, Claude Code offers to turn it on the first time Claude reads outside the working directories ([docs](https://code.claude.com/docs/en/permissions)).
+
+They are left off because they cover Claude's file tools only — a `cp`, `mv` or `echo … >` run through Bash or PowerShell still writes anywhere, which only the [Bash sandbox](#bash-sandbox-opt-in-not-enabled-here) constrains — and because they refuse edits you may want when asked: your user settings in `~/.claude/`, a sibling repository, files Claude Code itself keeps outside the project. Turn them on per machine (`~/.claude/settings.json`) or per checkout (`.claude/settings.local.json`) if you run in `auto` or `bypassPermissions` mode, and add the directories you do want reachable to `additionalDirectories`.
+
 > Full documentation: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)
 
 ### Bash Sandbox (opt-in, not enabled here)
@@ -444,6 +466,7 @@ Key characteristics:
 - **Configurable tools and model**: agents can restrict tool access and use a different model (e.g., Haiku for speed)
 - **Nesting**: subagents can spawn their own subagents, up to 3 layers below the main conversation by default; at the limit Claude Code withholds the `Agent` tool so the subagent does the work itself. Change the limit with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
 - **Background by default**: subagents run in the background while you keep working, and notify on completion or when they need input
+- **Cost and context knobs**: an agent's frontmatter can set `effort` (`low` to `max`, depending on the model) and, since v2.1.296, `autoCompactWindow` (`100000`–`1000000` tokens, to compact that agent's context earlier); an Agent call's `effort` overrides the frontmatter (v2.1.292+), and `CLAUDE_CODE_SUBAGENT_EFFORT` is the default when neither is set. The agents here set neither, so they run at the session's defaults
 
 > Full documentation: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)
 
@@ -551,6 +574,19 @@ The `.mcp.json` file in the project root defines which servers are available. Ea
 | **docker** | Docker container management | If using Docker |
 
 > **context7** is recommended for all projects — it gives Claude access to current library docs, reducing hallucinated APIs and outdated patterns. The other servers are situational: keep or remove them from `.mcp.json` based on your project's stack.
+
+### Recommended Plugins (not installed)
+
+Plugins bundle skills, agents, hooks, MCP and LSP servers behind one install. Two from Anthropic's `claude-plugins-official` marketplace, which Claude Code ships with, fit a Python project. Neither is enabled in `settings.json`: one needs a tool on your machine, the other spends model calls on every turn, so each is a per-developer choice.
+
+| Plugin | What it adds | Install | Cost and requirements |
+|--------|--------------|---------|-----------------------|
+| **pyright-lsp** | Pyright as a language server: Claude sees type errors and can go to definitions and references in `.py`/`.pyi` files, instead of grepping | `uv tool install pyright`, then `/plugin install pyright-lsp@claude-plugins-official` | Needs `pyright-langserver` on `PATH` (the PyPI package provides it, and downloads Node.js on first run if none is installed) |
+| **security-guidance** | Pattern warnings on edits (`yaml.load`, `pickle.load`, hardcoded secrets…), an LLM review of the diff when Claude finishes a turn, and an agentic review on `git commit` | `/plugin install security-guidance@claude-plugins-official` | The diff review runs on the newest Opus at the end of **every** turn and the commit review on every commit, billed to your account; pin a cheaper model with `SECURITY_REVIEW_MODEL`, or keep only the free pattern warnings with `ENABLE_CODE_SECURITY_REVIEW=0`. Overlaps the on-demand `security-reviewer` agent |
+
+An enabled plugin is part of every session: its skills' and agents' descriptions sit in Claude's context on every turn, and its hooks fire at their events. `/plugin` shows a **Context cost** estimate for official-marketplace plugins before you install. To make one part of the team setup instead, install it at **project scope**, which enables it for everyone through the committed `.claude/settings.json`; each collaborator still installs it on their own machine.
+
+> Full documentation: [code.claude.com/docs/en/plugins](https://code.claude.com/docs/en/plugins)
 
 ### Status Line (`.claude/statusline.py`)
 
