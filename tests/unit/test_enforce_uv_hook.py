@@ -35,6 +35,14 @@ DENIED_COMMANDS = [
     "py -3.12 script.py",
     "py -V:3.12 script.py",
     "echo building && py script.py",
+    # A rewrite answers "allow" for the whole command, so nothing may be chained
+    # after the tool: the pip install would be approved along with it.
+    "py x.py && pip install requests",
+    "python x.py && pip install requests",
+    "pytest; pip install requests",
+    # Only the first line could be rewritten, mangling the rest.
+    "cd sub\npy x.py",
+    "cd sub\npython x.py",
 ]
 
 # Already correct, or nothing to do with the Python toolchain.
@@ -49,6 +57,14 @@ IGNORED_COMMANDS = [
     # Tools whose names merely start with "py".
     "pyright src",
     "pyenv versions",
+    # The py launcher's own options and the Python install manager's commands
+    # manage interpreters; python would reject them.
+    "py --list",
+    "py --list-paths",
+    "py -0",
+    "py -0p",
+    "py install 3.13",
+    "py list",
 ]
 
 

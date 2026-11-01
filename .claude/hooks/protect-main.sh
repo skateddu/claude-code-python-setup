@@ -37,19 +37,27 @@ current_branch() {
     git -C "$1" symbolic-ref --short -q HEAD 2>/dev/null || true
 }
 
-# Echo stdin with one subcommand per line: shell separators (&&, ||, ;, |, &),
-# subshell parentheses and newlines all end a subcommand. awk instead of sed
-# because BSD sed has no `\n` in replacements.
+# Echo stdin with one subcommand per line: shell separators (&&, ||, ;, |, &)
+# and newlines end a subcommand. In Bash, so do parentheses, which open a
+# subshell or command substitution. In PowerShell they wrap an argument
+# (`Remove-Item -Path (Join-Path $HOME "*")`), so they become spaces and the
+# tokens inside stay with the command they feed. awk instead of sed because
+# BSD sed has no `\n` in replacements.
 split_into_subcommands() {
-    awk '{ gsub(/&&|\|\||[;|&()]/, "\n"); print }'
+    local tool_name=$1
+    if [ "$tool_name" = "PowerShell" ]; then
+        awk '{ gsub(/&&|\|\||[;|&]/, "\n"); gsub(/\$?[()]/, " "); print }'
+    else
+        awk '{ gsub(/&&|\|\||[;|&()]/, "\n"); print }'
+    fi
 }
 
 # A recursive delete target is broad when it names a filesystem root, the home
-# directory or the working directory, optionally followed by `/`, `\` or `/*`.
+# directory or the working directory, followed by any mix of `/`, `\` and `*`
+# (`/`, `~/*`, `/**`, `C:\*`).
 is_broad_target() {
     local target=$1
-    target=${target%\*}
-    while [[ -n "$target" && ( "$target" == */ || "$target" == *\\ ) ]]; do
+    while [[ -n "$target" && ( "$target" == */ || "$target" == *\\ || "$target" == *\* ) ]]; do
         target=${target%?}
     done
 
@@ -75,9 +83,12 @@ check_git_push() {
     local is_force=false has_lease=false pushes_every_branch=false
     local positionals=()
 
+    # --force-if-includes only refines a lease and does nothing without one,
+    # and --no-force-with-lease cancels any lease given before it.
     while [ $# -gt 0 ]; do
         case $1 in
-            --force-with-lease* | --force-if-includes) has_lease=true ;;
+            --force-with-lease*) has_lease=true ;;
+            --no-force-with-lease) has_lease=false ;;
             --force) is_force=true ;;
             --all | --branches | --mirror) pushes_every_branch=true ;;
             -o | --push-option | --repo | --receive-pack | --exec)
@@ -131,21 +142,36 @@ check_git_reset() {
     done
 }
 
+# Echo `path` resolved against `base` unless it is already absolute.
+resolve_dir() {
+    local base=$1 path=$2
+    if [[ "$path" == /* || "$path" =~ ^[A-Za-z]: ]]; then
+        echo "$path"
+    else
+        echo "$base/$path"
+    fi
+}
+
 # Dispatch the arguments following a `git` token to the subcommand's checks,
-# skipping git's global options. `-C <dir>` moves the repository the
-# subcommand acts on, which matters for a push that names no branch.
+# skipping git's global options, including those whose value is a separate
+# token (`--git-dir .git`), which would otherwise be read as the subcommand.
+# `-C <dir>` and `--git-dir <dir>` move the repository the subcommand acts on,
+# which matters for a push that names no branch.
 check_git_command() {
     local repo_dir=$1
     shift
     while [ $# -gt 0 ]; do
         case $1 in
-            -C)
+            -C | --git-dir)
                 [ $# -gt 1 ] || return 0
-                repo_dir="$repo_dir/$2"
-                [[ "$2" == /* || "$2" =~ ^[A-Za-z]: ]] && repo_dir=$2
+                repo_dir=$(resolve_dir "$repo_dir" "$2")
                 shift 2
                 ;;
-            -c)
+            --git-dir=*)
+                repo_dir=$(resolve_dir "$repo_dir" "${1#--git-dir=}")
+                shift
+                ;;
+            -c | --work-tree | --namespace | --config-env)
                 [ $# -gt 1 ] || return 0
                 shift 2
                 ;;
@@ -205,9 +231,10 @@ check_remove_item_command() {
         fi
         if [[ "$token" == -* ]]; then
             parameter=${token%%:*}
+            # A switch given an explicit `:$false` is off: -WhatIf:$false deletes.
             if [[ "-recurse" == "$parameter"* && "$token" != *:\$false ]]; then
                 is_recursive=true
-            elif [[ "-whatif" == "$parameter"* && ${#parameter} -ge 2 ]]; then
+            elif [[ "-whatif" == "$parameter"* && ${#parameter} -ge 2 && "$token" != *:\$false ]]; then
                 is_dry_run=true
             elif [[ "$parameter" == -inc* || "$parameter" == -exc* || "$parameter" == -fi* \
                 || "$parameter" == -cr* || "$parameter" == -st* ]]; then
@@ -244,19 +271,40 @@ is_remove_item_name() {
     return "$is_match"
 }
 
+# `git`, `/usr/bin/git`, `git.exe` or `C:\...\git.exe`.
+is_git_name() {
+    local name=${1##*[/\\]}
+    [ "$name" = "git" ] || [ "$name" = "git.exe" ]
+}
+
+# Wrapper options whose value is a user or group name, which may be `git`
+# (`sudo -u git rm -rf /`) without being the git program.
+is_user_option() {
+    case $1 in
+        -u | --user | -g | --group | -U | --other-user) return 0 ;;
+    esac
+    return 1
+}
+
 # Run every check that applies to one subcommand's tokens. A guarded program is
 # looked for at every position, not only the first, so wrappers (`sudo rm`,
 # `bash -c "git push --force"`) are still inspected. After a `git` token, `rm`
-# is git's own subcommand (`git rm -r --cached .`), not a filesystem delete.
+# is git's own subcommand (`git rm -r --cached .`) and later words are its
+# arguments (`git commit -m "drop rm -rf ."`), not a filesystem delete.
 check_subcommand() {
     local tool_name=$1 repo_dir=$2
     shift 2
     local tokens=("$@")
-    local index is_after_git=false
+    local index is_after_git=false previous=""
     for ((index = 0; index < ${#tokens[@]}; index++)); do
         local token=${tokens[index]}
         local rest=("${tokens[@]:index+1}")
-        if [ "$token" = "git" ]; then
+        local is_value_of_user_option=false
+        if is_user_option "$previous"; then
+            is_value_of_user_option=true
+        fi
+        previous=$token
+        if is_git_name "$token" && [ "$is_value_of_user_option" = false ]; then
             is_after_git=true
             check_git_command "$repo_dir" ${rest[@]+"${rest[@]}"}
         elif [ "$is_after_git" = true ]; then
@@ -290,6 +338,6 @@ while IFS= read -r subcommand; do
     read -ra tokens <<< "$subcommand" || true
     [ "${#tokens[@]}" -gt 0 ] || continue
     check_subcommand "$tool_name" "$working_dir" "${tokens[@]}"
-done < <(printf '%s\n' "$scannable" | split_into_subcommands)
+done < <(printf '%s\n' "$scannable" | split_into_subcommands "$tool_name")
 
 exit 0

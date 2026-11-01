@@ -47,6 +47,11 @@ strip_heredoc_bodies() {
 # that opens it and the line that closes it. A here-string opens with `@'` or
 # `@"` as the last thing on a line and closes with `'@` or `"@` at the start of
 # a line; code can follow the closer (`'@; git push`), so that line is kept.
+#
+# An ordinary string can also end a line with `@"` (`$to = "dev@"`), and taking
+# it for an opener would hide every following line from the hooks. So `@` must
+# start a token (line start, whitespace, `=`, `(` or `,` before it) and sit
+# outside any string: an even number of that quote character before it.
 strip_here_string_bodies() {
     awk -v quote=\' '
     {
@@ -60,9 +65,15 @@ strip_here_string_bodies() {
             }
             next
         }
-        if (match($0, "@[" quote "\"][ \t]*$")) {
-            closer = substr($0, RSTART + 1, 1) "@"
-            in_body = 1
+        if (match($0, "(^|[ \t=(,])@[" quote "\"][ \t]*$")) {
+            # The match starts on the character before `@`, unless `@` opens the line.
+            opener_start = RSTART + (substr($0, RSTART, 1) == "@" ? 0 : 1)
+            quote_char = substr($0, opener_start + 1, 1)
+            before_opener = substr($0, 1, opener_start - 1)
+            if (gsub(quote_char, "", before_opener) % 2 == 0) {
+                closer = quote_char "@"
+                in_body = 1
+            }
         }
         print
     }
