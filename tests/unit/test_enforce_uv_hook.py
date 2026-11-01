@@ -43,6 +43,10 @@ DENIED_COMMANDS = [
     # Only the first line could be rewritten, mangling the rest.
     "cd sub\npy x.py",
     "cd sub\npython x.py",
+    # A mention of uv used to wave the whole command through.
+    "uv run pytest && pip install requests",
+    "uv sync && pytest",
+    "uvx ruff check . ; python setup.py install",
 ]
 
 # Already correct, or nothing to do with the Python toolchain.
@@ -52,6 +56,12 @@ IGNORED_COMMANDS = [
     "uv add requests",
     "uvx ruff check .",
     "uv pip list",
+    # Tool names as uv's arguments are not bare invocations.
+    "uv add --dev pytest",
+    "uv run --with ruff ruff check .",
+    "uv run python -m pytest -x",
+    "uv tool install pyright",
+    "uv sync && uv run pytest",
     "git status",
     "ls -la",
     # Tools whose names merely start with "py".

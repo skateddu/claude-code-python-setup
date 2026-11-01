@@ -348,7 +348,7 @@ See the docs for the full list.
 | **guard-secrets** | `UserPromptSubmit` | Blocks a prompt that looks like it contains a hardcoded secret (API keys, tokens, private keys) |
 | **enforce-uv** | `PreToolUse` (Bash, PowerShell) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`, and Windows' `py` launcher to `uv run python`; blocks `pip`, `py -m pip`, `py -3.12`-style version selectors (pointing at `uv run --python`) and ambiguous cases with `uv add`/`uv sync` guidance |
 | **protect-main** | `PreToolUse` (Bash, PowerShell) | Blocks force pushes (`--force`, `-f`, `+refspec`), any push that writes to main/master (`origin main`, `HEAD:main`, `:main`, `--all`, or a bare `git push` while main is checked out), `git reset --hard`, and recursive deletes of a root, home or working directory (`rm -r -f /`, `rm -rf ~/*`, `Remove-Item -Recurse -Force C:\`) |
-| **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
+| **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files inside the project after every edit, from the project root; files elsewhere (scratch files, other repositories) are left alone |
 | **verify** | `Stop` | Runs `ruff check` + `pytest` when Claude finishes; on failure, blocks the stop and feeds the errors back so Claude keeps fixing |
 
 ### Permissions (`.claude/settings.json`)
@@ -631,20 +631,19 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | File | Asserts |
 |------|---------|
 | `test_protect_main_hook.py` | Force pushes, pushes to main in every refspec form, `reset --hard` and broad `rm -rf` / `Remove-Item -Recurse` are denied — while `--force-with-lease`, `main-fix`, `git rm -r --cached .` and `rm -rf ~/tmp-dir` still pass; a bare `git push` is resolved against the branch checked out in a scratch repository |
-| `test_enforce_uv_hook.py` | Bare `python`/`pytest`/`ruff` are rewritten to `uv run ...`; `pip` and compound commands are denied; anything already using uv is left alone |
+| `test_enforce_uv_hook.py` | Bare `python`/`pytest`/`ruff` are rewritten to `uv run ...`; `pip` and compound commands are denied, including a bare tool chained after uv (`uv sync && pytest`); tool names as uv's own arguments (`uv add --dev pytest`) are left alone |
 | `test_guard_secrets_hook.py` | Credential-shaped prompts are blocked, prose *about* credentials is not |
 | `test_session_start_hook.py` | Missing `.venv` or a stale `uv.lock` is reported; a healthy project stays silent |
 | `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
-| `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
+| `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored; a misformatted file outside the project is left untouched, one inside it is formatted even when the hook runs from another directory |
 | `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
 | `test_hook_wiring.py` | Every hook command in `settings.json` resolves its script from `$CLAUDE_PROJECT_DIR`, and the guards fail closed; the configured commands, run from a subdirectory, still deny and rewrite; `session-start` and `verify` act on the project root, not the current directory |
 | `test_powershell_hooks.py` | Every guard wired for Bash in `settings.json` is wired for PowerShell too; PowerShell payloads get the same decisions; here-string bodies are ignored while code after the closer is caught |
 | `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists; and the command in `settings.json`, run through bash, reaches an interpreter and renders |
 
-Two gaps are deliberate and worth knowing:
+One gap is deliberate and worth knowing:
 
 - **`verify.sh`'s ruff/pytest execution path is not covered.** Running it from inside the suite would invoke pytest recursively, and a throwaway uv project would need a network install on every CI run. Only its guard clauses are tested.
-- **`auto-lint.sh`'s formatting path is not covered**, because whether ruff acts on a given file depends on the surrounding project's `include` configuration. Only the conditions under which the hook must do nothing are tested.
 
 The tests check the **hook wiring** in `settings.json` only statically: that each guarded program has an `if` condition for both shells, under a matcher for the same tool. Whether Claude Code then routes a given call through that condition is verifiable only by running Claude Code — a hook can be correct, referenced, and still never fire.
 
