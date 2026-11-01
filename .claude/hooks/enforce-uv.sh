@@ -36,8 +36,11 @@ tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 # heredoc or here-string body. Rewrites below still emit the original command.
 scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 
-# Skip if already using uv
-[[ "$scannable" == *"uv run"* || "$scannable" == *"uv add"* || "$scannable" == *"uv remove"* || "$scannable" == *"uv sync"* || "$scannable" == *"uv pip"* || "$scannable" == *"uvx "* ]] && exit 0
+# No early exit for commands that already use uv: one mention of `uv run`
+# anywhere used to wave the whole command through, so `uv sync && pip install x`
+# skipped every rule. The rules below match a tool only at the start of the
+# command or right after a separator, so `uv run pytest`, `uv add --dev pytest`
+# and `uv pip list` never match them, while a bare tool chained after uv does.
 
 # A rewrite answers "allow", which also skips the permission prompt for the
 # whole command, so it is only offered for a simple command: one line, no
