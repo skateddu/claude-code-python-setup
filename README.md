@@ -368,12 +368,14 @@ Pre-configured permission rules in `.claude/settings.json` control what Claude c
 |---------|-----------------|
 | `.env`, `.env.{local,development,staging,production,test}`, `.envrc` | Environment variables (`.env.example` is allowed) |
 | `secrets/**` | Secrets directory |
-| `**/credentials*`, `**/secret*` | Credential and secret files |
+| `**/secrets.{json,yaml,yml,toml}`, `**/*.secret` | Secret config files (`secrets.example.toml` is allowed) |
+| `**/credentials.json`, `**/credentials` | Service-account and AWS-style credential files |
+| `**/*.token`, `**/token.json` | Token files, including OAuth's `token.json` |
+| `**/.pypirc`, `**/.netrc`, `~/.pypirc`, `~/.netrc`, `~/.aws/credentials` | PyPI upload tokens, machine logins, AWS keys |
 | `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/*.jks` | Certificates and private keys |
-| `**/*token*` | Token files |
 | `~/.ssh/**`, `**/id_rsa*`, `**/id_ed25519*`, `**/id_ecdsa*`, `**/id_dsa*` | SSH keys |
 
-These rules are enforced at the system level — Claude cannot bypass them regardless of the prompt. Customize by editing the `permissions` object in `.claude/settings.json`.
+These rules are enforced at the system level — Claude cannot bypass them regardless of the prompt. A Read deny rule also refuses writes to the same path, so the rules name credential files by their shape rather than by a word in the name: a rule like `**/*token*` would also lock Claude out of `auth/tokens.py` or `tokenizer.py`. `tests/unit/test_permission_rules.py` checks both sides. Customize by editing the `permissions` object in `.claude/settings.json`.
 
 > Full documentation: [code.claude.com/docs/en/settings#excluding-sensitive-files](https://code.claude.com/docs/en/settings#excluding-sensitive-files)
 
@@ -637,6 +639,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
 | `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored; a misformatted file outside the project is left untouched, one inside it is formatted even when the hook runs from another directory |
 | `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
+| `test_permission_rules.py` | The Read deny rules cover credential files (`.env`, `secrets.toml`, `token.json`, `.pypirc`, keys) and leave source and docs readable (`auth/tokens.py`, `secret_manager.py`, `token-counting.md`) |
 | `test_hook_wiring.py` | Every hook command in `settings.json` resolves its script from `$CLAUDE_PROJECT_DIR`, and the guards fail closed; the configured commands, run from a subdirectory, still deny and rewrite; `session-start` and `verify` act on the project root, not the current directory |
 | `test_powershell_hooks.py` | Every guard wired for Bash in `settings.json` is wired for PowerShell too; PowerShell payloads get the same decisions; here-string bodies are ignored while code after the closer is caught |
 | `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists; and the command in `settings.json`, run through bash, reaches an interpreter and renders |
