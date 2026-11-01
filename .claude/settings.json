@@ -82,6 +82,12 @@
             "type": "command",
             "command": "bash .claude/hooks/enforce-uv.sh",
             "timeout": 10000,
+            "if": "Bash(py *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
             "if": "Bash(pytest *)"
           },
           {
@@ -148,6 +154,12 @@
             "command": "bash .claude/hooks/enforce-uv.sh",
             "timeout": 10000,
             "if": "PowerShell(python3 *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/enforce-uv.sh",
+            "timeout": 10000,
+            "if": "PowerShell(py *)"
           },
           {
             "type": "command",

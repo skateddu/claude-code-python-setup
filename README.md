@@ -103,7 +103,7 @@ claude-code-python-setup/
 │   │   │   └── command-text.sh  # Strips heredoc bodies before pattern matching
 │   │   ├── session-start.sh  # Check uv env (.venv, lockfile) at session start
 │   │   ├── guard-secrets.sh  # Block prompts containing hardcoded secrets
-│   │   ├── enforce-uv.sh     # Rewrite bare python/pytest to uv run, block pip
+│   │   ├── enforce-uv.sh     # Rewrite bare python/py/pytest to uv run, block pip
 │   │   ├── protect-main.sh   # Block force push, push to main, broad rm -rf / Remove-Item
 │   │   ├── auto-lint.sh      # Auto-format Python files with ruff after edits
 │   │   └── verify.sh         # Run ruff + pytest on Stop; block until green
@@ -335,7 +335,7 @@ See the docs for the full list.
 |------|-------|-------------|
 | **session-start** | `SessionStart` | Checks the uv environment (`.venv`, `uv.lock` freshness) and injects the status into the session context |
 | **guard-secrets** | `UserPromptSubmit` | Blocks a prompt that looks like it contains a hardcoded secret (API keys, tokens, private keys) |
-| **enforce-uv** | `PreToolUse` (Bash, PowerShell) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`; blocks `pip` and ambiguous cases with `uv add`/`uv sync` guidance |
+| **enforce-uv** | `PreToolUse` (Bash, PowerShell) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`, and Windows' `py` launcher to `uv run python`; blocks `pip`, `py -m pip`, `py -3.12`-style version selectors (pointing at `uv run --python`) and ambiguous cases with `uv add`/`uv sync` guidance |
 | **protect-main** | `PreToolUse` (Bash, PowerShell) | Blocks force pushes (`--force`, `-f`, `+refspec`), any push that writes to main/master (`origin main`, `HEAD:main`, `:main`, `--all`, or a bare `git push` while main is checked out), `git reset --hard`, and recursive deletes of a root, home or working directory (`rm -r -f /`, `rm -rf ~/*`, `Remove-Item -Recurse -Force C:\`) |
 | **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
 | **verify** | `Stop` | Runs `ruff check` + `pytest` when Claude finishes; on failure, blocks the stop and feeds the errors back so Claude keeps fixing |

@@ -14,6 +14,11 @@ REWRITTEN_COMMANDS = [
     ("bandit -r src", "uv run bandit -r src"),
     # Leading whitespace is trimmed so the rewrite stays well formed.
     ("   pytest", "uv run pytest"),
+    # Windows' py launcher becomes uv's python, arguments untouched.
+    ("py script.py", "uv run python script.py"),
+    ("py -c 'print(1)'", "uv run python -c 'print(1)'"),
+    ("py -m pytest -x", "uv run python -m pytest -x"),
+    ("  py", "uv run python"),
 ]
 
 # pip has no mechanical uv equivalent, and compound commands are ambiguous to
@@ -25,6 +30,11 @@ DENIED_COMMANDS = [
     "python -m pip install requests",
     "echo building && python setup.py",
     "cat notes.txt | pytest",
+    "py -m pip install requests",
+    # A version selector maps onto uv's --python, which the rewrite cannot fill in.
+    "py -3.12 script.py",
+    "py -V:3.12 script.py",
+    "echo building && py script.py",
 ]
 
 # Already correct, or nothing to do with the Python toolchain.
@@ -36,6 +46,9 @@ IGNORED_COMMANDS = [
     "uv pip list",
     "git status",
     "ls -la",
+    # Tools whose names merely start with "py".
+    "pyright src",
+    "pyenv versions",
 ]
 
 
@@ -70,3 +83,9 @@ def test_enforce_uv_pip_reason_points_at_uv_add(run_hook: RunHook) -> None:
     result = run_hook("enforce-uv", bash_payload("pip install requests"))
 
     assert "uv add" in result.reason
+
+
+def test_enforce_uv_py_version_reason_points_at_uv_python_flag(run_hook: RunHook) -> None:
+    result = run_hook("enforce-uv", bash_payload("py -3.12 script.py"))
+
+    assert "--python" in result.reason
