@@ -125,6 +125,12 @@
             "command": "bash .claude/hooks/protect-main.sh",
             "timeout": 10000,
             "if": "Bash(rm *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-main.sh",
+            "timeout": 10000,
+            "if": "Bash(sudo *)"
           }
         ]
       },
@@ -184,6 +190,12 @@
             "command": "bash .claude/hooks/protect-main.sh",
             "timeout": 10000,
             "if": "PowerShell(git *)"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-main.sh",
+            "timeout": 10000,
+            "if": "PowerShell(Remove-Item *)"
           }
         ]
       }

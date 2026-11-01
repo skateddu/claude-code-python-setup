@@ -104,7 +104,7 @@ claude-code-python-setup/
 │   │   ├── session-start.sh  # Check uv env (.venv, lockfile) at session start
 │   │   ├── guard-secrets.sh  # Block prompts containing hardcoded secrets
 │   │   ├── enforce-uv.sh     # Rewrite bare python/pytest to uv run, block pip
-│   │   ├── protect-main.sh   # Block force push, direct push to main, broad rm -rf
+│   │   ├── protect-main.sh   # Block force push, push to main, broad rm -rf / Remove-Item
 │   │   ├── auto-lint.sh      # Auto-format Python files with ruff after edits
 │   │   └── verify.sh         # Run ruff + pytest on Stop; block until green
 │   ├── rules/                # Modular coding standards
@@ -336,7 +336,7 @@ See the docs for the full list.
 | **session-start** | `SessionStart` | Checks the uv environment (`.venv`, `uv.lock` freshness) and injects the status into the session context |
 | **guard-secrets** | `UserPromptSubmit` | Blocks a prompt that looks like it contains a hardcoded secret (API keys, tokens, private keys) |
 | **enforce-uv** | `PreToolUse` (Bash, PowerShell) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`; blocks `pip` and ambiguous cases with `uv add`/`uv sync` guidance |
-| **protect-main** | `PreToolUse` (Bash, PowerShell) | Blocks `git push --force`, direct push to main/master, `git reset --hard`; on Bash also broad `rm -rf` (PowerShell's `Remove-Item -Recurse -Force` is not guarded) |
+| **protect-main** | `PreToolUse` (Bash, PowerShell) | Blocks force pushes (`--force`, `-f`, `+refspec`), any push that writes to main/master (`origin main`, `HEAD:main`, `:main`, `--all`, or a bare `git push` while main is checked out), `git reset --hard`, and recursive deletes of a root, home or working directory (`rm -r -f /`, `rm -rf ~/*`, `Remove-Item -Recurse -Force C:\`) |
 | **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
 | **verify** | `Stop` | Runs `ruff check` + `pytest` when Claude finishes; on failure, blocks the stop and feeds the errors back so Claude keeps fixing |
 
@@ -586,7 +586,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 
 | File | Asserts |
 |------|---------|
-| `test_protect_main_hook.py` | Force pushes, pushes to main, `reset --hard` and broad `rm -rf` are denied — while `--force-with-lease`, `rm -rf .git` and `rm -rf ~/tmp-dir` still pass |
+| `test_protect_main_hook.py` | Force pushes, pushes to main in every refspec form, `reset --hard` and broad `rm -rf` / `Remove-Item -Recurse` are denied — while `--force-with-lease`, `main-fix`, `git rm -r --cached .` and `rm -rf ~/tmp-dir` still pass; a bare `git push` is resolved against the branch checked out in a scratch repository |
 | `test_enforce_uv_hook.py` | Bare `python`/`pytest`/`ruff` are rewritten to `uv run ...`; `pip` and compound commands are denied; anything already using uv is left alone |
 | `test_guard_secrets_hook.py` | Credential-shaped prompts are blocked, prose *about* credentials is not |
 | `test_session_start_hook.py` | Missing `.venv` or a stale `uv.lock` is reported; a healthy project stays silent |
