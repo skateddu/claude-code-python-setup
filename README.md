@@ -134,6 +134,7 @@ claude-code-python-setup/
 │       ├── doc-coauthoring/
 │       ├── docker-patterns/
 │       ├── docx/
+│       ├── fastapi-patterns/
 │       ├── frontend-design/
 │       ├── mcp-builder/
 │       ├── pdf/
@@ -501,6 +502,7 @@ Every skill here is loaded whether a project uses it or not. Run `/skill-doctor`
 | **django-verification** | Django pre-deployment verification: migrations, tests, security scans | [ECC][src-ecc] (adapted) |
 | **doc-coauthoring** | Structured documentation co-authoring workflow | [anthropics/skills][src-skills] |
 | **docker-patterns** | Docker/Compose: multi-container orchestration, networking, security hardening | [ECC][src-ecc] |
+| **fastapi-patterns** | FastAPI on this template's rules: routes → services → repositories, injected settings, domain errors mapped once, OAuth2 with PyJWT and pwdlib, httpx tests; ships a runnable `example/` | [ECC][src-ecc] (adapted) |
 | **docx** | Word document and `.dotx` template creation and manipulation | [anthropics/skills][src-skills] |
 | **frontend-design** | Visual design direction for new or reshaped UI: aesthetics, typography, avoiding templated defaults | [anthropics/skills][src-skills] |
 | **mcp-builder** | Guide for creating MCP servers (Python FastMCP, TypeScript SDK v1 and v2) | [anthropics/skills][src-skills] |
@@ -629,7 +631,7 @@ Most agents, skills and commands in `.claude/` are not original to this template
 |--------|---------|--------------------|-------------|
 | [anthropics/skills][src-skills] | see each skill's `LICENSE.txt` | 10 skills: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx` | `ca45fc4` (2026-10-28) |
 | [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | skills: `8f814f4` (2026-10-15); agents and commands: checked against `a7ba5b9` (2026-10-30), local adaptations kept |
-| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | skills: `b92f181` (2026-10-12), plus `django-security` at `95e6e4e` (2026-10-14); agents and commands: initial import (2026-03-20) |
+| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 10 skills, 7 agents and 3 commands | skills: `b92f181` (2026-10-12), plus `django-security` at `95e6e4e` (2026-10-14) and `fastapi-patterns` adapted from `c5378bf` (2026-10-14); agents and commands: initial import (2026-03-20) |
 
 Where a component exists in both upstreams, the Anthropic copy is the one vendored — except `code-reviewer`, which shares only its name with the Anthropic agents and comes from ECC. `/notebook-review` is the only component written for this template.
 
