@@ -12,17 +12,13 @@ import re
 
 import pytest
 
-from tests.hook_harness import REPO_ROOT, RunHook, bash_payload, powershell_payload
+from tests.hook_harness import SETTINGS_PATH, RunHook, bash_payload, powershell_payload
 
-SETTINGS_PATH = REPO_ROOT / ".claude" / "settings.json"
-GUARD_HOOK_COMMANDS = {
-    "bash .claude/hooks/enforce-uv.sh",
-    "bash .claude/hooks/protect-main.sh",
-}
+GUARD_SCRIPTS = ("enforce-uv.sh", "protect-main.sh")
 # PowerShell guards deletes as `Remove-Item`, whose rule also matches its `rm`
 # alias. `sudo` is wired for both: Windows 11 24H2 and later ship one.
 BASH_ONLY_PROGRAMS = {"rm"}
-PROTECT_MAIN_COMMAND = "bash .claude/hooks/protect-main.sh"
+PROTECT_MAIN_SCRIPT = "protect-main.sh"
 IF_CONDITION_PATTERN = re.compile(r"^(?P<tool>Bash|PowerShell)\((?P<program>\S+) \*\)$")
 
 DENIED_COMMANDS = [
@@ -59,19 +55,26 @@ HERE_STRING_COMMANDS = [
 
 
 def _guard_conditions_by_tool() -> dict[str, set[tuple[str, str]]]:
-    """Map each tool to the (hook command, guarded program) pairs wired for it."""
+    """Map each tool to the (guard script, guarded program) pairs wired for it.
+
+    Guards are recognised by script name, not by the exact command string, so a
+    change to how the command is spelled cannot leave this check matching
+    nothing and passing vacuously.
+    """
     settings = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
     conditions: dict[str, set[tuple[str, str]]] = {"Bash": set(), "PowerShell": set()}
     for matcher_group in settings["hooks"]["PreToolUse"]:
         for hook in matcher_group["hooks"]:
-            if hook["command"] not in GUARD_HOOK_COMMANDS:
+            script = next((name for name in GUARD_SCRIPTS if name in hook["command"]), None)
+            if script is None:
                 continue
             parsed = IF_CONDITION_PATTERN.match(hook.get("if", ""))
             assert parsed, f"unexpected if condition on {hook['command']}: {hook.get('if')!r}"
             assert parsed["tool"] == matcher_group["matcher"], (
                 f"{hook['if']!r} sits under matcher {matcher_group['matcher']!r} and never fires"
             )
-            conditions[parsed["tool"]].add((hook["command"], parsed["program"]))
+            conditions[parsed["tool"]].add((script, parsed["program"]))
+    assert conditions["Bash"], "no guard hooks found in settings.json"
     return conditions
 
 
@@ -91,7 +94,7 @@ def test_settings_guard_every_bash_program_under_powershell_too() -> None:
 def test_settings_guard_remove_item_under_powershell() -> None:
     conditions = _guard_conditions_by_tool()
 
-    assert (PROTECT_MAIN_COMMAND, "Remove-Item") in conditions["PowerShell"]
+    assert (PROTECT_MAIN_SCRIPT, "Remove-Item") in conditions["PowerShell"]
 
 
 @pytest.mark.parametrize(("hook_name", "command"), DENIED_COMMANDS)

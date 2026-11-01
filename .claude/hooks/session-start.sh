@@ -10,6 +10,10 @@ set -euo pipefail
 # still drained so Claude Code's write to the pipe always completes.
 cat >/dev/null
 
+# Hooks run in Claude's current directory, which follows every `cd`; the files
+# checked below live at the project root.
+cd "${CLAUDE_PROJECT_DIR:-.}"
+
 # Only act inside a uv-managed Python project.
 [ -f pyproject.toml ] || exit 0
 

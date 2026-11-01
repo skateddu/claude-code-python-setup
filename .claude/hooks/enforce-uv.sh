@@ -18,9 +18,11 @@ deny() {
 
 # Emit a PreToolUse "allow" decision that rewrites the command via updatedInput, then exit.
 # Lets a simple bare invocation run under uv instead of being blocked outright.
+# updatedInput replaces the whole tool input, so the original fields (timeout,
+# run_in_background, description) are carried over and only `command` changes.
 allow_rewrite() {
-    jq -nc --arg cmd "$1" --arg reason "$2" \
-        '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", permissionDecisionReason: $reason, updatedInput: {command: $cmd}}}'
+    printf '%s' "$input" | jq -c --arg cmd "$1" --arg reason "$2" \
+        '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", permissionDecisionReason: $reason, updatedInput: ((.tool_input // {}) + {command: $cmd})}}'
     exit 0
 }
 
