@@ -29,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **CI**: a `test-macos` job runs the hook tests on `macos-latest` and prints the bash version that ran them, since the hooks are meant to work under macOS's bash 3.2
 - **CI**: a `test-windows` job runs the hook tests on `windows-latest`, since the Ubuntu-only job could not catch Windows-specific failures like the one above
 
+### Changed
+
+- **Skills**: re-synced `claude-api` and `mcp-builder` with anthropics/skills `ca45fc4`. `claude-api` gains Claude Haiku 5.5 as the current Haiku, dynamic workflows and four more Managed Agents quickstarts (`bug-hunter`, `explainer-video-maker`, `performance-tuner`, `watchlist-scanner`), plus the Managed Agents and preserved-thinking fixes; `mcp-builder` teaches v2 of the MCP TypeScript SDK (`reference/node_mcp_server_v2.md`). The local fix to `mcp-builder`'s evaluation script and guide, which upstream still ships with retired model ids, is kept. The other eight anthropics/skills skills had no upstream changes
+- **django-security skill**: taken from ECC `95e6e4e`. `SECURE_BROWSER_XSS_FILTER`, a no-op since Django 4.0, is dropped, and `CSRF_COOKIE_HTTPONLY` is `False` so the skill's own AJAX example can read the CSRF token from `document.cookie`; `SESSION_COOKIE_HTTPONLY` stays `True`
+- **README credits**: the agents and commands from claude-plugins-official were checked against upstream `a7ba5b9`. Eight match it; `comment-analyzer`, `silent-failure-hunter` and `/revise-claude-md` differ only by local adaptations (Python `logging` and `AppError` in place of upstream's Sentry/`errorIds.ts` references, prose trigger descriptions, `CLAUDE.local.md` and rules discovery), which are kept. `silent-failure-hunter` is now marked "(adapted)"
+
 ## [1.5.0] - 2026-10-15
 
 ### Added

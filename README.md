@@ -458,7 +458,7 @@ Key characteristics:
 | **pr-test-analyzer** | Test coverage quality: behavioral gaps, critical paths, edge cases | [claude-plugins-official][src-official] |
 | **refactor-cleaner** | Dead code detection, refactoring (vulture, ruff) | [ECC][src-ecc] (adapted) |
 | **security-reviewer** | Security audit (bandit, safety, pip-audit, OWASP Top 10) | [ECC][src-ecc] (adapted) |
-| **silent-failure-hunter** | Error handling audit: silent failures, catch blocks, fallback behavior | [claude-plugins-official][src-official] |
+| **silent-failure-hunter** | Error handling audit: silent failures, catch blocks, fallback behavior | [claude-plugins-official][src-official] (adapted) |
 | **tdd-guide** | Test-driven development with pytest | [ECC][src-ecc] (adapted) |
 | **type-design-analyzer** | Type design quality: encapsulation, invariants, enforcement ratings | [claude-plugins-official][src-official] |
 
@@ -490,7 +490,7 @@ Every skill here is loaded whether a project uses it or not. Run `/skill-doctor`
 | Skill | Description | Source |
 |-------|-------------|--------|
 | **api-design** | REST API design: resource naming, status codes, pagination, versioning | [ECC][src-ecc] |
-| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents, model migration, cost optimization, evals, Python SDK 0.x → 1.x upgrade | [anthropics/skills][src-skills] |
+| **claude-api** | Claude API and Anthropic SDK reference: model IDs and pricing, streaming, tool use, prompt caching, token counting, Managed Agents and dynamic workflows, model migration, API version migration, cost optimization, evals, Python SDK 0.x → 1.x upgrade | [anthropics/skills][src-skills] |
 | **claude-automation-recommender** | Analyze codebases and recommend Claude Code automations (hooks, skills, MCP servers) | [claude-plugins-official][src-official] |
 | **claude-md-improver** | Audit and improve CLAUDE.md files: quality scoring, targeted updates | [claude-plugins-official][src-official] (adapted) |
 | **database-migrations** | Safe zero-downtime migrations, reversible patterns (SQLAlchemy, Django, golang-migrate) | [ECC][src-ecc] |
@@ -503,7 +503,7 @@ Every skill here is loaded whether a project uses it or not. Run `/skill-doctor`
 | **docker-patterns** | Docker/Compose: multi-container orchestration, networking, security hardening | [ECC][src-ecc] |
 | **docx** | Word document and `.dotx` template creation and manipulation | [anthropics/skills][src-skills] |
 | **frontend-design** | Visual design direction for new or reshaped UI: aesthetics, typography, avoiding templated defaults | [anthropics/skills][src-skills] |
-| **mcp-builder** | Guide for creating MCP servers | [anthropics/skills][src-skills] |
+| **mcp-builder** | Guide for creating MCP servers (Python FastMCP, TypeScript SDK v1 and v2) | [anthropics/skills][src-skills] |
 | **pdf** | PDF reading, merging, splitting, OCR | [anthropics/skills][src-skills] |
 | **playground** | Interactive HTML playgrounds: visual controls, live preview, prompt output | [claude-plugins-official][src-official] |
 | **postgres-patterns** | PostgreSQL query optimization, schema design, indexing, RLS, connection pooling | [ECC][src-ecc] |
@@ -627,9 +627,9 @@ Most agents, skills and commands in `.claude/` are not original to this template
 
 | Source | License | What comes from it | Last synced |
 |--------|---------|--------------------|-------------|
-| [anthropics/skills][src-skills] | see each skill's `LICENSE.txt` | 10 skills: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx` | `683bc88` (2026-10-07) |
-| [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | skills: `8f814f4` (2026-10-15); agents and commands: initial import (2026-03-20) |
-| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | skills: `b92f181` (2026-10-12); agents and commands: initial import (2026-03-20) |
+| [anthropics/skills][src-skills] | see each skill's `LICENSE.txt` | 10 skills: `claude-api`, `doc-coauthoring`, `docx`, `frontend-design`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `webapp-testing`, `xlsx` | `ca45fc4` (2026-10-28) |
+| [anthropics/claude-plugins-official][src-official] | Apache-2.0 | 3 skills, 6 agents and 6 commands from the `claude-code-setup`, `claude-md-management`, `playground`, `feature-dev`, `pr-review-toolkit` and `commit-commands` plugins | skills: `8f814f4` (2026-10-15); agents and commands: checked against `a7ba5b9` (2026-10-30), local adaptations kept |
+| [ECC (Everything Claude Code)][src-ecc] by Affaan Mustafa | MIT | 9 skills, 7 agents and 3 commands | skills: `b92f181` (2026-10-12), plus `django-security` at `95e6e4e` (2026-10-14); agents and commands: initial import (2026-03-20) |
 
 Where a component exists in both upstreams, the Anthropic copy is the one vendored — except `code-reviewer`, which shares only its name with the Anthropic agents and comes from ECC. `/notebook-review` is the only component written for this template.
 
