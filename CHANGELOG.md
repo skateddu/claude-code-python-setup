@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Read deny rules blocked source code**: `**/*token*`, `**/secret*` and `**/credentials*` matched a word in the file name, and a Read deny rule also refuses writes, so Claude could neither read nor edit `auth/tokens.py`, `tokenizer.py`, `secrets.py`, `secret_manager.py` or `credentials.py` — nor this template's own `claude-api/shared/token-counting.md`. They are replaced by credential-file shapes: `secrets.{json,yaml,yml,toml}`, `*.secret`, `credentials.json`, `credentials`, `*.token`, `token.json`. Credential files that were not covered before are added: `.pypirc` (PyPI upload tokens) and `.netrc` in the project and the home directory, and `~/.aws/credentials`. `tests/unit/test_permission_rules.py` checks both sides
+
 - **Regressions and gaps found in a second review** of the hook work:
   - `protect-main` (PowerShell): turning parentheses into spaces let a `git` call in a condition hide a script block's commands, so `if ((git branch …) -eq "x") { Remove-Item -Recurse -Force ~ }` passed. Braces now end a subcommand
   - `enforce-uv`: the pass-through for the `py` launcher's own options (`py --list`) let a chained command through (`py --list && pip install requests`); it now applies to a simple command only
