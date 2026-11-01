@@ -34,6 +34,15 @@ DANGEROUS_COMMANDS = [
     "git -c push.default=current push origin main",
     "cd src && git push --force origin feature",
     "bash -c 'git push --force origin feature'",
+    # Global options whose value is a separate token, not the subcommand.
+    "git --git-dir .git push --force origin feature",
+    "git --work-tree . push origin main",
+    "git --namespace ns push origin main",
+    "/usr/bin/git push --force origin feature",
+    # --force-if-includes does nothing without a lease; --no-force-with-lease
+    # cancels one given before it.
+    "git push --force --force-if-includes origin feature",
+    "git push --force-with-lease --no-force-with-lease --force origin feature",
     "git reset --hard HEAD~1",
     "git reset HEAD~1 --hard",
     "rm -rf /",
@@ -54,11 +63,20 @@ DANGEROUS_COMMANDS = [
     "sudo rm -rf /",
     "/bin/rm -rf /",
     'bash -c "rm -rf /"',
+    # Without globstar `**` expands like `*`.
+    "rm -rf /**",
+    "rm -rf ~/**",
+    # `git` as the value of a user option is not the git program.
+    "sudo -u git rm -rf /",
 ]
 
 SAFE_COMMANDS = [
     # --force-with-lease is the sanctioned way to overwrite remote history.
     "git push --force-with-lease origin feature",
+    "git push --force-with-lease --force-if-includes origin feature",
+    # Words after a git subcommand are its arguments, not commands.
+    'git commit -m "drop the rm -rf . guard"',
+    "rm -rf build/**",
     "git push origin feature/some-work",
     # Names that merely contain a protected one.
     "git push origin main-fix",
@@ -96,6 +114,13 @@ DANGEROUS_POWERSHELL_COMMANDS = [
     "Remove-Item -Recurse -Force .\\build, ~",
     "Microsoft.PowerShell.Management\\Remove-Item -Recurse ~",
     "Set-Location C:\\work; Remove-Item -Recurse -Force .",
+    # An explicit :$false turns -WhatIf off, so this one really deletes.
+    "Remove-Item -Recurse -Force C:\\ -WhatIf:$false",
+    # Parentheses wrap an argument in PowerShell; the target stays with the command.
+    'Remove-Item -Path (Join-Path $HOME "*") -Recurse -Force',
+    "Remove-Item -Recurse -Force $($HOME)",
+    "Remove-Item -Recurse -Force C:\\**",
+    "sudo git push --force origin feature",
     "git push origin HEAD:main",
     "git push --force origin feature",
 ]

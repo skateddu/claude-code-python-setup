@@ -100,7 +100,7 @@ claude-code-python-setup/
 │   │   └── test-coverage.md
 │   ├── hooks/                # Deterministic guardrails
 │   │   ├── lib/
-│   │   │   └── command-text.sh  # Strips heredoc bodies before pattern matching
+│   │   │   └── command-text.sh  # Strips heredoc / here-string bodies before matching
 │   │   ├── session-start.sh  # Check uv env (.venv, lockfile) at session start
 │   │   ├── guard-secrets.sh  # Block prompts containing hardcoded secrets
 │   │   ├── enforce-uv.sh     # Rewrite bare python/py/pytest to uv run, block pip
@@ -316,6 +316,7 @@ Key characteristics:
 - **Both shells**: on Windows, Claude Code runs commands through the PowerShell tool as well as Bash, so the two `PreToolUse` guards are wired to both. The hook scripts themselves are bash in either case — Claude Code runs them with Git Bash on Windows
 - **Dependency**: requires `jq` for JSON parsing of hook input
 - **Code vs. text**: a hook receives the whole command string, which mixes code with data. The two `PreToolUse` hooks strip heredoc bodies (Bash) and here-string bodies (`@'…'@`, PowerShell) via `hooks/lib/command-text.sh` before matching, so a `gh pr create` whose description quotes `pip install` or `rm -rf /` isn't mistaken for running them
+- **Guardrails, not a boundary**: the guards read the command text and do not parse shell quoting, so they catch the commands Claude writes by mistake, not a command built to slip past them (`eval`, a script file, an alias). They err on the side of denying: a quoted `git push --force` in a one-line `-m` message is denied too, and a rewrite to `uv run` is only offered for a one-line command with no `;`, `&&` or `|`, since its `allow` also skips the permission prompt for everything chained after it. For enforcement that doesn't depend on the command text, see the [Bash sandbox](#bash-sandbox-opt-in-not-enabled-here)
 
 This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`, all with `command` handlers. Claude Code exposes more than thirty events, and four other handler types: `http` (POST to an endpoint), `mcp_tool` (call a tool on a configured MCP server), `prompt` (a single-turn model evaluation) and `agent` (a subagent that can use tools, experimental). Among the events most useful to extend this setup:
 

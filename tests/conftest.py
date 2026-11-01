@@ -30,6 +30,16 @@ def _is_wsl_launcher(bash_path: Path) -> bool:
 
     `C:\\Windows\\System32\\bash.exe` forwards to a WSL distro, which cannot see
     Windows-side tools such as jq and fails outright when no distro is installed.
+
+    Parameters
+    ----------
+    bash_path
+        Path of a `bash.exe` candidate.
+
+    Returns
+    -------
+    bool
+        True when `bash_path` lives in the Windows `System32` directory.
     """
     system_root = Path(os.environ.get("SYSTEMROOT", r"C:\Windows"))
     return bash_path.resolve().parent == (system_root / "System32").resolve()
@@ -41,6 +51,11 @@ def _find_windows_git_bash() -> str | None:
     Checked in order: the `CLAUDE_CODE_GIT_BASH_PATH` override Claude Code also
     honours, the `bin/bash.exe` next to the `git` on PATH, then any bash on PATH
     that is not the WSL launcher.
+
+    Returns
+    -------
+    str | None
+        Path to Git Bash, or None when no usable bash is found.
     """
     override = os.environ.get(GIT_BASH_PATH_ENV_VAR)
     if override and Path(override).is_file():

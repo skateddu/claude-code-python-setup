@@ -20,8 +20,8 @@ GUARD_HOOK_COMMANDS = {
     "bash .claude/hooks/protect-main.sh",
 }
 # PowerShell guards deletes as `Remove-Item`, whose rule also matches its `rm`
-# alias, and has no `sudo`.
-BASH_ONLY_PROGRAMS = {"rm", "sudo"}
+# alias. `sudo` is wired for both: Windows 11 24H2 and later ship one.
+BASH_ONLY_PROGRAMS = {"rm"}
 PROTECT_MAIN_COMMAND = "bash .claude/hooks/protect-main.sh"
 IF_CONDITION_PATTERN = re.compile(r"^(?P<tool>Bash|PowerShell)\((?P<program>\S+) \*\)$")
 
@@ -144,6 +144,33 @@ def test_protect_main_still_denies_a_command_after_a_here_string(
     result = run_hook("protect-main", powershell_payload(command))
 
     assert result.permission_decision == "deny"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        '$to = "dev@"\ngit push --force origin feature\n',
+        "$to = 'dev@'\ngit push --force origin feature\n",
+        # `@"` inside a string that is still open is not an opener either.
+        '$note = "mail me @"\ngit push --force origin feature\n',
+    ],
+    ids=["double-quoted-email", "single-quoted-email", "at-inside-open-string"],
+)
+def test_protect_main_does_not_take_a_string_ending_in_at_for_a_here_string(
+    run_hook: RunHook, command: str
+) -> None:
+    """Mistaking `"dev@"` for an opener would hide every later line."""
+    result = run_hook("protect-main", powershell_payload(command))
+
+    assert result.permission_decision == "deny"
+
+
+def test_guard_hooks_strip_a_here_string_assigned_to_a_variable(run_hook: RunHook) -> None:
+    command = '$msg = @"\ngit push --force origin main\n"@\nWrite-Output $msg\n'
+
+    result = run_hook("protect-main", powershell_payload(command))
+
+    assert result.is_silent, f"here-string body should be ignored, hook emitted: {result.stdout!r}"
 
 
 def test_protect_main_does_not_strip_here_strings_from_bash(run_hook: RunHook) -> None:

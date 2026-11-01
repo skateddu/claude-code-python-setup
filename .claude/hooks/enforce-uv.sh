@@ -37,28 +37,46 @@ scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 # Skip if already using uv
 [[ "$scannable" == *"uv run"* || "$scannable" == *"uv add"* || "$scannable" == *"uv remove"* || "$scannable" == *"uv sync"* || "$scannable" == *"uv pip"* || "$scannable" == *"uvx "* ]] && exit 0
 
+# A rewrite answers "allow", which also skips the permission prompt for the
+# whole command, so it is only offered for a simple command: one line, no
+# separators. Anything chained after the tool (`py x.py && pip install y`)
+# would otherwise be approved along with it. Other commands fall through to
+# the deny rules below. Separators inside quotes count too: denying a quoted
+# `|` with guidance is cheaper than approving a real one.
+is_simple_command=false
+if [[ "$scannable" != *$'\n'* && "$scannable" != *[\;\&\|]* ]]; then
+    is_simple_command=true
+fi
+trimmed=${command#"${command%%[![:space:]]*}"}
+
+# The `py` launcher's own options and the Python install manager's commands
+# manage interpreters rather than run one, so there is nothing to route via uv.
+if echo "$scannable" | grep -qE '^\s*py\s+(--list|-0|(install|uninstall|list|help)(\s|$))'; then
+    exit 0
+fi
+
 # Windows' `py` launcher picks an interpreter on its own, outside uv's managed
 # environment. A version selector (`py -3.12`, `py -V:3.12`) corresponds to uv's
 # `--python`, but its suffixes (`-3.12-32`, `-V:Company/Tag`) have no reliable
 # translation, so it is denied with the equivalent rather than rewritten.
-if echo "$scannable" | grep -qE '^\s*py\s+-(V:|[0-9])'; then
+if echo "$scannable" | grep -qE '(^|[;&|]\s*)py\s+-(V:|[1-9])'; then
     deny "Use \`uv run --python <version> python ...\` instead of the py launcher's version selector (e.g. \`py -3.12 x.py\` -> \`uv run --python 3.12 python x.py\`)."
 fi
 
 # Rewrite a simple `py` invocation to `uv run python`, keeping its arguments.
 # `py -m pip` falls through to the pip deny rules below.
-if echo "$scannable" | grep -qE '^\s*py(\s|$)' \
+if [ "$is_simple_command" = true ] \
+    && echo "$scannable" | grep -qE '^\s*py(\s|$)' \
     && ! echo "$scannable" | grep -qE '^\s*py\s+-m\s+pip\b'; then
-    trimmed=${command#"${command%%[![:space:]]*}"}
     allow_rewrite "uv run python${trimmed#py}" "Rewrote the py launcher to run under uv's managed environment: uv run python${trimmed#py}"
 fi
 
-# Auto-rewrite a simple, single bare-tool invocation (command starts with the tool)
-# to run under uv. Compound commands and pip are left to the deny rules below, where
-# the right transformation is ambiguous (e.g. pip install -e . is not uv add).
-if echo "$scannable" | grep -qE '^\s*(python3?|pytest|ruff|mypy|bandit)\b' \
+# Auto-rewrite a simple bare-tool invocation (command starts with the tool) to
+# run under uv. pip is left to the deny rules below, where the right
+# transformation is ambiguous (e.g. pip install -e . is not uv add).
+if [ "$is_simple_command" = true ] \
+    && echo "$scannable" | grep -qE '^\s*(python3?|pytest|ruff|mypy|bandit)\b' \
     && ! echo "$scannable" | grep -qE '^\s*python3?\s+-m\s+pip\b'; then
-    trimmed=$(echo "$command" | sed -E 's/^[[:space:]]+//')
     allow_rewrite "uv run $trimmed" "Rewrote to run under uv's managed environment: uv run $trimmed"
 fi
 
