@@ -311,10 +311,11 @@ Key characteristics:
 
 - **Deterministic**: hooks always execute — they don't depend on Claude's interpretation
 - **Blocking**: `PreToolUse` hooks return a `hookSpecificOutput` object whose `permissionDecision` is one of `deny` (block), `allow` (auto-approve), `ask` (escalate to the user), or `defer` (fall back to the normal permission flow); they can also rewrite the tool call via `updatedInput`. Example: `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}`
-- **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash)
-- **Conditional**: an `if` field (permission-rule syntax, e.g. `Bash(git *)`) scopes a hook to matching commands so it doesn't spawn a process on every tool call — `enforce-uv` and `protect-main` use this to skip non-Python/non-git commands
+- **Composable**: multiple hooks can run on the same event (e.g., enforce-uv + protect-main both run on Bash and PowerShell)
+- **Conditional**: an `if` field (permission-rule syntax, e.g. `Bash(git *)` or `PowerShell(git *)`) scopes a hook to matching commands so it doesn't spawn a process on every tool call — `enforce-uv` and `protect-main` use this to skip non-Python/non-git commands. A rule matches a single tool, so each guarded program is listed once per shell
+- **Both shells**: on Windows, Claude Code runs commands through the PowerShell tool as well as Bash, so the two `PreToolUse` guards are wired to both. The hook scripts themselves are bash in either case — Claude Code runs them with Git Bash on Windows
 - **Dependency**: requires `jq` for JSON parsing of hook input
-- **Code vs. text**: a hook receives the whole command string, which mixes code with data. The two `PreToolUse` hooks strip heredoc bodies (via `hooks/lib/command-text.sh`) before matching, so a `gh pr create` whose description quotes `pip install` or `rm -rf /` isn't mistaken for running them
+- **Code vs. text**: a hook receives the whole command string, which mixes code with data. The two `PreToolUse` hooks strip heredoc bodies (Bash) and here-string bodies (`@'…'@`, PowerShell) via `hooks/lib/command-text.sh` before matching, so a `gh pr create` whose description quotes `pip install` or `rm -rf /` isn't mistaken for running them
 
 This setup hooks into `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop`, all with `command` handlers. Claude Code exposes more than thirty events, and four other handler types: `http` (POST to an endpoint), `mcp_tool` (call a tool on a configured MCP server), `prompt` (a single-turn model evaluation) and `agent` (a subagent that can use tools, experimental). Among the events most useful to extend this setup:
 
@@ -334,8 +335,8 @@ See the docs for the full list.
 |------|-------|-------------|
 | **session-start** | `SessionStart` | Checks the uv environment (`.venv`, `uv.lock` freshness) and injects the status into the session context |
 | **guard-secrets** | `UserPromptSubmit` | Blocks a prompt that looks like it contains a hardcoded secret (API keys, tokens, private keys) |
-| **enforce-uv** | `PreToolUse` (Bash) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`; blocks `pip` and ambiguous cases with `uv add`/`uv sync` guidance |
-| **protect-main** | `PreToolUse` (Bash) | Blocks `git push --force`, direct push to main/master, `git reset --hard`, broad `rm -rf` |
+| **enforce-uv** | `PreToolUse` (Bash, PowerShell) | Auto-rewrites simple bare `python`/`pytest`/`ruff`/`mypy`/`bandit` calls to `uv run`; blocks `pip` and ambiguous cases with `uv add`/`uv sync` guidance |
+| **protect-main** | `PreToolUse` (Bash, PowerShell) | Blocks `git push --force`, direct push to main/master, `git reset --hard`; on Bash also broad `rm -rf` (PowerShell's `Remove-Item -Recurse -Force` is not guarded) |
 | **auto-lint** | `PostToolUse` (Edit\|Write) | Runs `ruff check --fix` and `ruff format` on Python files after every edit |
 | **verify** | `Stop` | Runs `ruff check` + `pytest` when Claude finishes; on failure, blocks the stop and feeds the errors back so Claude keeps fixing |
 
@@ -592,6 +593,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | `test_verify_hook.py` | The `stop_hook_active` loop guard and the non-Python-project exit |
 | `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
 | `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
+| `test_powershell_hooks.py` | Every guard wired for Bash in `settings.json` is wired for PowerShell too; PowerShell payloads get the same decisions; here-string bodies are ignored while code after the closer is caught |
 | `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists |
 
 Two gaps are deliberate and worth knowing:
@@ -599,7 +601,7 @@ Two gaps are deliberate and worth knowing:
 - **`verify.sh`'s ruff/pytest execution path is not covered.** Running it from inside the suite would invoke pytest recursively, and a throwaway uv project would need a network install on every CI run. Only its guard clauses are tested.
 - **`auto-lint.sh`'s formatting path is not covered**, because whether ruff acts on a given file depends on the surrounding project's `include` configuration. Only the conditions under which the hook must do nothing are tested.
 
-The tests do not check the **hook wiring** in `settings.json` — that a hook's `matcher` and `if` condition actually route the events you expect. A hook can be correct, referenced, and still never fire. That wiring is verifiable only by running Claude Code.
+The tests check the **hook wiring** in `settings.json` only statically: that each guarded program has an `if` condition for both shells, under a matcher for the same tool. Whether Claude Code then routes a given call through that condition is verifiable only by running Claude Code — a hook can be correct, referenced, and still never fire.
 
 ## Contributing
 
