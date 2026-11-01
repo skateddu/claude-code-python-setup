@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Regressions and gaps found in a second review** of the hook work:
+  - `protect-main` (PowerShell): turning parentheses into spaces let a `git` call in a condition hide a script block's commands, so `if ((git branch …) -eq "x") { Remove-Item -Recurse -Force ~ }` passed. Braces now end a subcommand
+  - `enforce-uv`: the pass-through for the `py` launcher's own options (`py --list`) let a chained command through (`py --list && pip install requests`); it now applies to a simple command only
+  - `enforce-uv`: a rewrite approved commands embedded in `$(…)`, backticks or `<(…)` (`python $(pip install requests)` ran without a prompt). Those now make a command non-simple, so it is denied instead
+  - `enforce-uv`: separators inside quoted strings and file-descriptor redirects no longer make a command non-simple, so `pytest -x 2>&1` and `python -c "import sys; print(sys.prefix)"` are rewritten again instead of denied
+  - `protect-main`: `--attr-source` and `--super-prefix` are skipped with their values, so `git --attr-source HEAD push --force …` is checked
+- **fastapi-patterns example**: an explicit `null` in `PATCH /users/{id}` reached a NOT NULL column and came back as a 409 "already exists"; it is now a 422. Tokens must carry `exp`, `iss` and `sub`, and the issuer is verified, as `rules/security.md` requires (PyJWT checks `exp` only when present). Argon2 hashing and verification run in a worker thread through `anyio` instead of blocking the event loop. `example/uv.lock` is committed, CI runs the example with `--locked` so a new upstream warning can't fail `main` under `-W error`, and Dependabot keeps the lock current
+- **.env.example**: the four environment variables added to the README were missing
+
 - **auto-lint hook reformatted files outside the project**: it ran `ruff check --fix` and `ruff format` on any edited `.py` file, so a scratch file or a file in another repository was rewritten under this project's rules (ruff formats a path passed explicitly even when the project's `include` leaves it out). It now acts only on files under `$CLAUDE_PROJECT_DIR`, comparing the Windows spellings of a path (`C:\…`, `C:/…`, `/c/…`) as equal, and runs ruff from the project root so the project's configuration applies after a `cd`
 - **enforce-uv skipped any command that mentioned uv**: one `uv run`, `uv sync` or `uvx` anywhere exited the hook early, so `uv sync && pip install requests` or `uv run pytest; ruff check` went through unchecked. The early exit is gone; the rules already match a tool only at the start of a command or after a separator, so uv's own arguments (`uv add --dev pytest`, `uv run --with ruff ruff check .`) still pass
 

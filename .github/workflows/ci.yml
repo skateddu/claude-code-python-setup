@@ -43,8 +43,8 @@ jobs:
       - name: Test the fastapi-patterns example
         working-directory: .claude/skills/fastapi-patterns/example
         run: |
-          uv run --python 3.10 python -m pytest -q -W error
-          uv run --with ruff ruff check .
+          uv run --locked --python 3.10 python -m pytest -q -W error
+          uv run --locked ruff check .
 
   test-windows:
     name: Test hooks on Windows

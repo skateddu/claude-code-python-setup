@@ -41,12 +41,14 @@ current_branch() {
 # and newlines end a subcommand. In Bash, so do parentheses, which open a
 # subshell or command substitution. In PowerShell they wrap an argument
 # (`Remove-Item -Path (Join-Path $HOME "*")`), so they become spaces and the
-# tokens inside stay with the command they feed. awk instead of sed because
-# BSD sed has no `\n` in replacements.
+# tokens inside stay with the command they feed; braces, which open a script
+# block (`if (...) { Remove-Item ... }`, `foreach (...) { ... }`), end one, so
+# a `git` in the condition does not hide the block's commands. awk instead of
+# sed because BSD sed has no `\n` in replacements.
 split_into_subcommands() {
     local tool_name=$1
     if [ "$tool_name" = "PowerShell" ]; then
-        awk '{ gsub(/&&|\|\||[;|&]/, "\n"); gsub(/\$?[()]/, " "); print }'
+        awk '{ gsub(/&&|\|\||[;|&{}]/, "\n"); gsub(/\$?[()]/, " "); print }'
     else
         awk '{ gsub(/&&|\|\||[;|&()]/, "\n"); print }'
     fi
@@ -171,7 +173,7 @@ check_git_command() {
                 repo_dir=$(resolve_dir "$repo_dir" "${1#--git-dir=}")
                 shift
                 ;;
-            -c | --work-tree | --namespace | --config-env)
+            -c | --work-tree | --namespace | --config-env | --attr-source | --super-prefix)
                 [ $# -gt 1 ] || return 0
                 shift 2
                 ;;

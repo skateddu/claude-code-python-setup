@@ -5,6 +5,7 @@ description = "Example user API for the fastapi-patterns skill"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "anyio",
     "asyncpg",
     "fastapi",
     "pwdlib[argon2]",

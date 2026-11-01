@@ -12,14 +12,14 @@ A small but complete user API that follows `.claude/rules/` (`architecture.md`, 
 ## Dependencies
 
 ```bash
-uv add fastapi pydantic-settings "pydantic[email]" "sqlalchemy[asyncio]" asyncpg pyjwt "pwdlib[argon2]" python-multipart
+uv add fastapi pydantic-settings "pydantic[email]" "sqlalchemy[asyncio]" asyncpg pyjwt "pwdlib[argon2]" python-multipart anyio
 uv add --dev pytest pytest-asyncio httpx aiosqlite
 uv add --dev uvicorn  # or "fastapi[standard]" for the fastapi CLI
 ```
 
 - **PyJWT and pwdlib**, not `python-jose` and `passlib`: both are unmaintained, and `passlib` breaks with current `bcrypt`. FastAPI's own docs moved to PyJWT and pwdlib with Argon2.
-- `python-multipart` is required by `OAuth2PasswordRequestForm`.
-- Leave version bounds to uv: some current releases (`pydantic-settings` 2.16, SQLAlchemy 2.1) need Python 3.11, and with `requires-python = ">=3.10"` uv resolves older ones for 3.10 only if the bounds allow it.
+- `python-multipart` is required by `OAuth2PasswordRequestForm`; `anyio` runs password hashing in a worker thread. FastAPI already depends on it, but code that imports a package declares it.
+- Leave version bounds to uv and **commit `uv.lock`**: the lock pins what runs, and loose bounds let uv pick per-Python versions (current `pydantic-settings` 2.16 and SQLAlchemy 2.1 need Python 3.11; with `requires-python = ">=3.10"` uv resolves older ones for 3.10). `example/uv.lock` is committed and CI runs with `--locked`.
 
 ## Project Structure
 
@@ -118,6 +118,7 @@ class Settings(BaseSettings):
     database_url: str
     jwt_secret_key: SecretStr
     jwt_algorithm: str = "HS256"
+    jwt_issuer: str = "my-app"
     access_token_expire_minutes: int = 30
     allowed_origins: list[str] = ["http://localhost:3000"]
 ```
@@ -155,7 +156,7 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 class UserCreate(BaseModel):
@@ -178,6 +179,15 @@ class UserUpdate(BaseModel):
 
     email: EmailStr | None = None
     username: str | None = Field(default=None, min_length=3, max_length=50)
+
+    @field_validator("email", "username")
+    @classmethod
+    def reject_explicit_null(cls, value: str | None) -> str | None:
+        # A field may be left out, but an explicit null would reach a NOT NULL
+        # column. Defaults are not validated, so an omitted field never gets here.
+        if value is None:
+            raise ValueError("may be omitted, but not set to null")
+        return value
 
 
 class UserResponse(BaseModel):
@@ -206,7 +216,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 ```
 
-Separate input (`Create`/`Update`) from output (`Response`) models, and declare `response_model` on every route, so a field such as `hashed_password` can never leak into a response.
+Separate input (`Create`/`Update`) from output (`Response`) models, and declare `response_model` on every route, so a field such as `hashed_password` can never leak into a response. In an `Update` model, `X | None = None` lets a field be left out but also accepts an explicit `null`; the validator turns that into a 422 instead of a NOT NULL violation in the database.
 
 ## Domain Exceptions, Mapped Once
 
@@ -399,14 +409,16 @@ async def update_user(
 
 ## Service Layer
 
-Business rules live here and raise domain errors. It imports nothing from FastAPI, so it can be unit tested with a fake repository.
+Business rules live here and raise domain errors. It imports nothing from FastAPI, so it can be unit tested with a fake repository. Two details worth copying: Argon2 is slow on purpose, so hashing and verifying run in a worker thread instead of blocking the event loop; and tokens must carry `exp`, `iss` and `sub`, because PyJWT checks an expiry only when one is present.
 
 ```python
 # src/my_app/services/user_service.py
 """Business rules for registration, authentication and profile updates."""
 
 from datetime import datetime, timedelta, timezone
+from functools import cache
 
+import anyio
 import jwt
 from pwdlib import PasswordHash
 
@@ -417,8 +429,22 @@ from my_app.repositories.user_repository import UserRepository
 from my_app.schemas.user import UserCreate, UserUpdate
 
 PASSWORD_HASH = PasswordHash.recommended()
-# Verified when the email is unknown, so a miss takes as long as a wrong password.
-DUMMY_PASSWORD_HASH = PASSWORD_HASH.hash("dummy-password-for-timing")
+REQUIRED_TOKEN_CLAIMS = ["exp", "iss", "sub"]
+
+
+@cache
+def _dummy_password_hash() -> str:
+    """A hash to verify when the email is unknown, so a miss takes as long as a hit."""
+    return PASSWORD_HASH.hash("dummy-password-for-timing")
+
+
+async def hash_password(password: str) -> str:
+    """Hash off the event loop: Argon2 is deliberately slow, CPU-bound work."""
+    return await anyio.to_thread.run_sync(PASSWORD_HASH.hash, password)
+
+
+async def verify_password(password: str, stored_hash: str) -> bool:
+    return await anyio.to_thread.run_sync(PASSWORD_HASH.verify, password, stored_hash)
 
 
 class UserService:
@@ -432,7 +458,7 @@ class UserService:
         user = User(
             email=payload.email,
             username=payload.username,
-            hashed_password=PASSWORD_HASH.hash(payload.password),
+            hashed_password=await hash_password(payload.password),
         )
         return await self._repository.save(user)
 
@@ -456,29 +482,36 @@ class UserService:
     async def authenticate(self, email: str, password: str) -> str:
         """Return an access token for valid credentials."""
         user = await self._repository.get_by_email(email)
-        stored_hash = user.hashed_password if user else DUMMY_PASSWORD_HASH
-        is_valid_password = PASSWORD_HASH.verify(password, stored_hash)
+        stored_hash = user.hashed_password if user else _dummy_password_hash()
+        is_valid_password = await verify_password(password, stored_hash)
         if user is None or not is_valid_password:
             raise AuthenticationError("Incorrect email or password")
         expires_at = datetime.now(timezone.utc) + timedelta(
             minutes=self._settings.access_token_expire_minutes
         )
         return jwt.encode(
-            {"sub": str(user.id), "exp": expires_at},
+            {"sub": str(user.id), "iss": self._settings.jwt_issuer, "exp": expires_at},
             self._settings.jwt_secret_key.get_secret_value(),
             algorithm=self._settings.jwt_algorithm,
         )
 
     async def user_from_token(self, token: str) -> User:
-        """Resolve a bearer token to an active user."""
+        """Resolve a bearer token to an active user.
+
+        The token must carry an expiry and this app's issuer: PyJWT checks `exp`
+        only when present, so without `require` a token minted without one,
+        or by another service sharing the secret, would be accepted forever.
+        """
         try:
             claims = jwt.decode(
                 token,
                 self._settings.jwt_secret_key.get_secret_value(),
                 algorithms=[self._settings.jwt_algorithm],
+                issuer=self._settings.jwt_issuer,
+                options={"require": REQUIRED_TOKEN_CLAIMS},
             )
             user_id = int(claims["sub"])
-        except (jwt.InvalidTokenError, KeyError, ValueError) as err:
+        except (jwt.InvalidTokenError, ValueError) as err:
             raise AuthenticationError("Could not validate credentials") from err
         user = await self._repository.get(user_id)
         if user is None:
@@ -592,7 +625,7 @@ async def client(settings: Settings, engine: AsyncEngine) -> AsyncIterator[Async
         yield client
 ```
 
-`example/tests/factories.py` registers users and logs in through the API, and `example/tests/integration/test_users_api.py` covers registration, the 409 conflict, the 422 validation error, the 401 challenge, the 403 on someone else's profile and stable pagination. A typical test:
+`example/tests/factories.py` registers users and logs in through the API, and `example/tests/integration/test_users_api.py` covers registration, the 409 conflict, the 422 validation error, the 401 challenge, the 403 on someone else's profile and stable pagination; `example/tests/integration/test_jwt_claims.py` rejects tokens without an expiry or with a foreign issuer, and an explicit `null` in an update. A typical test:
 
 ```python
 async def test_update_user_other_account_returns_403(client: AsyncClient) -> None:
@@ -651,4 +684,7 @@ async def list_items(db: Session = Depends(get_sync_db)):
 - [ ] Settings and sessions arrive through `Depends()`, never module globals
 - [ ] Paginated queries have an explicit `order_by`
 - [ ] Unknown email and wrong password take the same time and return the same 401
+- [ ] Tokens require `exp`, `iss` and `sub`; the issuer is checked on decode
+- [ ] CPU-bound work (password hashing) runs off the event loop
+- [ ] `uv.lock` is committed
 - [ ] Schema changes are Alembic migrations

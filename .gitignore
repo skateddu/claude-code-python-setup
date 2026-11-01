@@ -101,6 +101,7 @@ ipython_config.py
 #   uv.lock here is only a side-effect of running uv inside this .claude template
 #   (top-level dependencies are empty), so it is ignored rather than committed.
 uv.lock
+!.claude/skills/fastapi-patterns/example/uv.lock
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
