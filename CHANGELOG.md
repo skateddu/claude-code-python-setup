@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Hook tests on Windows**: the `bash_executable` fixture resolved `bash` with a plain PATH lookup, which on Windows finds `C:\Windows\System32\bash.exe`, the WSL launcher, instead of Git Bash. Every hook run then failed with exit code 1 (66 of 79 tests locally) without WSL ever being asked for. The fixture now looks for Git for Windows' bash, the shell Claude Code runs hooks with: `CLAUDE_CODE_GIT_BASH_PATH` first, then the `bin/bash.exe` next to `git`, then any bash on PATH except the launcher
+
+### Added
+
+- **CI**: a `test-windows` job runs the hook tests on `windows-latest`, since the Ubuntu-only job could not catch Windows-specific failures like the one above
+
 ## [1.5.0] - 2026-10-15
 
 ### Added

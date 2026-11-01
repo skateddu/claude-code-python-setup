@@ -39,3 +39,21 @@ jobs:
 
       - name: Test hook behaviour
         run: uv run pytest
+
+  test-windows:
+    name: Test hooks on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Test hook behaviour
+        run: uv run pytest
