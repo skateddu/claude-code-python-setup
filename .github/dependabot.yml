@@ -21,3 +21,14 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+
+  - package-ecosystem: uv
+    directory: /.claude/skills/fastapi-patterns/example
+    schedule:
+      interval: weekly
+    groups:
+      fastapi-example:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      include: scope

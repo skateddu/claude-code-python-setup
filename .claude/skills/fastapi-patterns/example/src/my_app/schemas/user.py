@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 class UserCreate(BaseModel):
@@ -25,6 +25,15 @@ class UserUpdate(BaseModel):
 
     email: EmailStr | None = None
     username: str | None = Field(default=None, min_length=3, max_length=50)
+
+    @field_validator("email", "username")
+    @classmethod
+    def reject_explicit_null(cls, value: str | None) -> str | None:
+        # A field may be left out, but an explicit null would reach a NOT NULL
+        # column. Defaults are not validated, so an omitted field never gets here.
+        if value is None:
+            raise ValueError("may be omitted, but not set to null")
+        return value
 
 
 class UserResponse(BaseModel):

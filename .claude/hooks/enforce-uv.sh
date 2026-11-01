@@ -44,19 +44,34 @@ scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 
 # A rewrite answers "allow", which also skips the permission prompt for the
 # whole command, so it is only offered for a simple command: one line, no
-# separators. Anything chained after the tool (`py x.py && pip install y`)
+# separator, no embedded command. Anything chained after the tool
+# (`py x.py && pip install y`) or run inside it (`python $(pip install y)`)
 # would otherwise be approved along with it. Other commands fall through to
-# the deny rules below. Separators inside quotes count too: denying a quoted
-# `|` with guidance is cheaper than approving a real one.
+# the deny rules below.
+#
+# Separators are looked for outside quoted strings and file-descriptor
+# redirects, so `python -c "a; b"` and `pytest -x 2>&1` stay simple. Command
+# and process substitution are looked for everywhere: `$(...)` runs even
+# inside double quotes, and denying a quoted one is cheaper than approving a
+# real one.
+code_outside_strings=$(printf '%s' "$scannable" | sed -E \
+    -e "s/'[^']*'//g" \
+    -e 's/"([^"\\]|\\.)*"//g' \
+    -e 's/[0-9]*>&[0-9-]+//g' \
+    -e 's/&>//g')
 is_simple_command=false
-if [[ "$scannable" != *$'\n'* && "$scannable" != *[\;\&\|]* ]]; then
+if [[ "$code_outside_strings" != *$'\n'* && "$code_outside_strings" != *[\;\&\|]* \
+    && "$scannable" != *'$('* && "$scannable" != *'`'* \
+    && "$scannable" != *'<('* && "$scannable" != *'>('* ]]; then
     is_simple_command=true
 fi
 trimmed=${command#"${command%%[![:space:]]*}"}
 
 # The `py` launcher's own options and the Python install manager's commands
-# manage interpreters rather than run one, so there is nothing to route via uv.
-if echo "$scannable" | grep -qE '^\s*py\s+(--list|-0|(install|uninstall|list|help)(\s|$))'; then
+# manage interpreters rather than run one, so a simple one is left alone. A
+# compound one goes on to the rules below, which check what is chained to it.
+if [ "$is_simple_command" = true ] \
+    && echo "$scannable" | grep -qE '^\s*py\s+(--list|-0|(install|uninstall|list|help)(\s|$))'; then
     exit 0
 fi
 

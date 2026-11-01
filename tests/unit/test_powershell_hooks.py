@@ -108,6 +108,15 @@ def test_guard_hooks_deny_powershell_command(
     )
 
 
+def test_enforce_uv_rewrites_python_c_with_quoted_semicolon(run_hook: RunHook) -> None:
+    """A `;` inside the quoted program separates nothing in PowerShell either."""
+    command = 'python -c "import sys; print(sys.prefix)"'
+
+    result = run_hook("enforce-uv", powershell_payload(command))
+
+    assert result.updated_command == f"uv run {command}"
+
+
 def test_enforce_uv_rewrites_bare_python_in_powershell(run_hook: RunHook) -> None:
     result = run_hook("enforce-uv", powershell_payload("python script.py"))
 

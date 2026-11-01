@@ -38,6 +38,8 @@ DANGEROUS_COMMANDS = [
     "git --git-dir .git push --force origin feature",
     "git --work-tree . push origin main",
     "git --namespace ns push origin main",
+    "git --attr-source HEAD push --force origin feature",
+    "git --super-prefix x/ push --force origin feature",
     "/usr/bin/git push --force origin feature",
     # --force-if-includes does nothing without a lease; --no-force-with-lease
     # cancels one given before it.
@@ -121,6 +123,9 @@ DANGEROUS_POWERSHELL_COMMANDS = [
     "Remove-Item -Recurse -Force $($HOME)",
     "Remove-Item -Recurse -Force C:\\**",
     "sudo git push --force origin feature",
+    # A git call in a condition must not hide the script block's commands.
+    'if ((git branch --show-current) -eq "x") { Remove-Item -Recurse -Force ~ }',
+    "foreach ($f in (git ls-files)) { Remove-Item -Recurse -Force C:\\ }",
     "git push origin HEAD:main",
     "git push --force origin feature",
 ]
