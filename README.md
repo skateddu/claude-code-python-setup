@@ -560,6 +560,8 @@ The status line shows three rows:
 
 The script is written in Python and works cross-platform: Windows, macOS, and Linux. Git operations are cached for 5 seconds to avoid lag on large repositories.
 
+It is launched with `uv run --no-project python`, not `python3`: on Windows, python.org's installer provides no `python3.exe`, so the name falls through to the Microsoft Store stub and the status line stays blank. `--no-project` skips the project sync `uv run` would otherwise do on every refresh; the script uses only the standard library.
+
 > Full documentation: [code.claude.com/docs/en/statusline](https://code.claude.com/docs/en/statusline)
 
 ## Continuous Integration
@@ -594,7 +596,7 @@ So each test runs the real script in a subprocess with a crafted payload and ass
 | `test_auto_lint_hook.py` | Non-Python files, deleted files and payloads without a path are ignored |
 | `test_heredoc_false_positives.py` | Tooling quoted inside a heredoc body is text, not an invocation — while code around the heredoc is still caught |
 | `test_powershell_hooks.py` | Every guard wired for Bash in `settings.json` is wired for PowerShell too; PowerShell payloads get the same decisions; here-string bodies are ignored while code after the closer is caught |
-| `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists |
+| `test_statusline.py` | The status line's prompt-cache segment: green while warm, yellow once cold, hidden until a hit ratio exists; and the command in `settings.json`, run through bash, reaches an interpreter and renders |
 
 Two gaps are deliberate and worth knowing:
 

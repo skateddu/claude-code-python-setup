@@ -1,4 +1,4 @@
-"""Tests for the prompt-cache segment of the status line script."""
+"""Tests for the status line script and the command `settings.json` runs it with."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import pytest
 from tests.hook_harness import REPO_ROOT
 
 STATUSLINE_SCRIPT = REPO_ROOT / ".claude" / "statusline.py"
+SETTINGS_PATH = REPO_ROOT / ".claude" / "settings.json"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 
@@ -55,3 +56,28 @@ def test_statusline_without_hit_ratio_omits_cache_segment(payload: dict[str, Any
     session_line = _session_line(payload=payload)
 
     assert "cache" not in session_line
+
+
+def test_statusline_configured_command_renders_the_model(bash_executable: str) -> None:
+    """The command in `settings.json` must reach a working interpreter.
+
+    It used to call `python3`, which on Windows with python.org's installer is
+    the Microsoft Store stub: it prints an install hint, exits non-zero, and
+    the status line stays blank. Claude Code runs the command through bash, so
+    this test does too.
+    """
+    settings = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+    command = settings["statusLine"]["command"]
+
+    completed = subprocess.run(
+        [bash_executable, "-c", command],
+        input=json.dumps({"model": {"display_name": "Opus"}}),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=REPO_ROOT,
+        timeout=60,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "[Opus]" in completed.stdout
