@@ -11,12 +11,36 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HOOKS_DIR = REPO_ROOT / ".claude" / "hooks"
+SETTINGS_PATH = REPO_ROOT / ".claude" / "settings.json"
 HOOK_TIMEOUT_SECONDS = 60
+PROJECT_DIR_ENV_VAR = "CLAUDE_PROJECT_DIR"
+
+
+def hook_environment(project_dir: Path | None) -> dict[str, str]:
+    """Build the environment a hook runs with, controlling `CLAUDE_PROJECT_DIR`.
+
+    Parameters
+    ----------
+    project_dir
+        Value for `CLAUDE_PROJECT_DIR`, or None to leave it unset.
+
+    Returns
+    -------
+    dict[str, str]
+        A copy of the current environment with `CLAUDE_PROJECT_DIR` replaced.
+    """
+    environment = {
+        name: value for name, value in os.environ.items() if name != PROJECT_DIR_ENV_VAR
+    }
+    if project_dir is not None:
+        environment[PROJECT_DIR_ENV_VAR] = str(project_dir)
+    return environment
 
 
 @dataclass(frozen=True)

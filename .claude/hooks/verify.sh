@@ -11,6 +11,11 @@ input=$(cat)
 stop_active=$(echo "$input" | jq -r '.stop_hook_active // false')
 [ "$stop_active" = "true" ] && exit 0
 
+# Hooks run in Claude's current directory, which follows every `cd`. From a
+# subdirectory there is no pyproject.toml here, and verification would be
+# skipped without a word, so lint and test from the project root.
+cd "${CLAUDE_PROJECT_DIR:-.}"
+
 # Only run inside a uv-managed Python project.
 [ -f pyproject.toml ] || exit 0
 command -v uv >/dev/null 2>&1 || exit 0

@@ -101,6 +101,29 @@ def test_enforce_uv_pip_reason_points_at_uv_add(run_hook: RunHook) -> None:
     assert "uv add" in result.reason
 
 
+def test_enforce_uv_rewrite_keeps_the_other_tool_input_fields(run_hook: RunHook) -> None:
+    """updatedInput replaces the whole tool input, so a rewrite must carry it over.
+
+    Sending only `command` reset a long test run's timeout to the default and
+    moved a background command into the foreground.
+    """
+    payload = bash_payload("pytest -x")
+    payload["tool_input"] |= {
+        "timeout": 600000,
+        "run_in_background": True,
+        "description": "Run the test suite",
+    }
+
+    result = run_hook("enforce-uv", payload)
+
+    assert result.payload["hookSpecificOutput"]["updatedInput"] == {
+        "command": "uv run pytest -x",
+        "timeout": 600000,
+        "run_in_background": True,
+        "description": "Run the test suite",
+    }
+
+
 def test_enforce_uv_py_version_reason_points_at_uv_python_flag(run_hook: RunHook) -> None:
     result = run_hook("enforce-uv", bash_payload("py -3.12 script.py"))
 

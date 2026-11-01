@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/session-start.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
             "timeout": 10000
           }
         ]
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/guard-secrets.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-secrets.sh\"",
             "timeout": 5000
           }
         ]
@@ -68,74 +68,86 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(python *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(python3 *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(py *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(pytest *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(ruff *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(mypy *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(bandit *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(pip *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(pip3 *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(git *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(rm *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "Bash(sudo *)"
           }
         ]
@@ -145,74 +157,86 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(python *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(python3 *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(py *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(pytest *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(ruff *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(mypy *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(bandit *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(pip *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/enforce-uv.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-uv.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(pip3 *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(git *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(Remove-Item *)"
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/protect-main.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-main.sh\"",
             "timeout": 10000,
+            "onFailure": "block",
             "if": "PowerShell(sudo *)"
           }
         ]
@@ -224,7 +248,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/auto-lint.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-lint.sh\"",
             "timeout": 30000
           }
         ]
@@ -235,7 +259,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/verify.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify.sh\"",
             "timeout": 180000
           }
         ]

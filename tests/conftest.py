@@ -12,7 +12,14 @@ from typing import Any
 
 import pytest
 
-from tests.hook_harness import HOOK_TIMEOUT_SECONDS, HOOKS_DIR, REPO_ROOT, HookResult, RunHook
+from tests.hook_harness import (
+    HOOK_TIMEOUT_SECONDS,
+    HOOKS_DIR,
+    REPO_ROOT,
+    HookResult,
+    RunHook,
+    hook_environment,
+)
 
 GIT_BASH_PATH_ENV_VAR = "CLAUDE_CODE_GIT_BASH_PATH"
 
@@ -109,16 +116,19 @@ def run_hook(bash_executable: str, jq_executable: str) -> RunHook:
     Returns
     -------
     RunHook
-        `run_hook(hook_name, payload, cwd=None)` -> `HookResult`. `hook_name` is
-        the script's stem, for example `"protect-main"`. `cwd` defaults to the
-        repository root; pass a temp directory for hooks that inspect the
-        working directory.
+        `run_hook(hook_name, payload, cwd=None, project_dir=None)` -> `HookResult`.
+        `hook_name` is the script's stem, for example `"protect-main"`. `cwd`
+        defaults to the repository root; pass a temp directory for hooks that
+        inspect the working directory. `project_dir` sets `CLAUDE_PROJECT_DIR`,
+        which Claude Code passes to every hook; it is unset otherwise, so a
+        value inherited from a Claude Code session never leaks into a test.
     """
 
     def _run(
         hook_name: str,
         payload: dict[str, Any],
         cwd: Path | None = None,
+        project_dir: Path | None = None,
     ) -> HookResult:
         script_path = HOOKS_DIR / f"{hook_name}.sh"
         assert script_path.is_file(), f"hook script not found: {script_path}"
@@ -129,6 +139,7 @@ def run_hook(bash_executable: str, jq_executable: str) -> RunHook:
             capture_output=True,
             text=True,
             cwd=str(cwd or REPO_ROOT),
+            env=hook_environment(project_dir=project_dir),
             timeout=HOOK_TIMEOUT_SECONDS,
         )
         return HookResult(exit_code=completed.returncode, stdout=completed.stdout)
