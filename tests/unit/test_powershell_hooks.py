@@ -30,6 +30,8 @@ DENIED_COMMANDS = [
     ("enforce-uv", "python -m pip install requests"),
     ("enforce-uv", "Set-Location src; pip install requests"),
     ("enforce-uv", "& python script.py"),
+    ("enforce-uv", "py -m pip install requests"),
+    ("enforce-uv", "py -3.12 script.py"),
     ("protect-main", "git push --force origin feature"),
     ("protect-main", "git push origin main"),
     ("protect-main", "git reset --hard HEAD~1"),

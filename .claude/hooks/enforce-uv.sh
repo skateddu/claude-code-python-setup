@@ -37,6 +37,22 @@ scannable=$(printf '%s\n' "$command" | strip_prose_bodies "$tool_name")
 # Skip if already using uv
 [[ "$scannable" == *"uv run"* || "$scannable" == *"uv add"* || "$scannable" == *"uv remove"* || "$scannable" == *"uv sync"* || "$scannable" == *"uv pip"* || "$scannable" == *"uvx "* ]] && exit 0
 
+# Windows' `py` launcher picks an interpreter on its own, outside uv's managed
+# environment. A version selector (`py -3.12`, `py -V:3.12`) corresponds to uv's
+# `--python`, but its suffixes (`-3.12-32`, `-V:Company/Tag`) have no reliable
+# translation, so it is denied with the equivalent rather than rewritten.
+if echo "$scannable" | grep -qE '^\s*py\s+-(V:|[0-9])'; then
+    deny "Use \`uv run --python <version> python ...\` instead of the py launcher's version selector (e.g. \`py -3.12 x.py\` -> \`uv run --python 3.12 python x.py\`)."
+fi
+
+# Rewrite a simple `py` invocation to `uv run python`, keeping its arguments.
+# `py -m pip` falls through to the pip deny rules below.
+if echo "$scannable" | grep -qE '^\s*py(\s|$)' \
+    && ! echo "$scannable" | grep -qE '^\s*py\s+-m\s+pip\b'; then
+    trimmed=${command#"${command%%[![:space:]]*}"}
+    allow_rewrite "uv run python${trimmed#py}" "Rewrote the py launcher to run under uv's managed environment: uv run python${trimmed#py}"
+fi
+
 # Auto-rewrite a simple, single bare-tool invocation (command starts with the tool)
 # to run under uv. Compound commands and pip are left to the deny rules below, where
 # the right transformation is ambiguous (e.g. pip install -e . is not uv add).
@@ -56,9 +72,14 @@ if echo "$scannable" | grep -qE '(^|[;&|]\s*)pip3?\s'; then
     deny "Use uv instead of pip. Examples: \`uv add <pkg>\`, \`uv remove <pkg>\`, \`uv sync\`, \`uv pip list\`."
 fi
 
-# python -m pip
-if echo "$scannable" | grep -qE '(^|[;&|]\s*)python3?\s+-m\s+pip\b'; then
-    deny "Use uv instead of python -m pip. Examples: \`uv add <pkg>\`, \`uv sync\`."
+# python -m pip, py -m pip
+if echo "$scannable" | grep -qE '(^|[;&|]\s*)(python3?|py)\s+-m\s+pip\b'; then
+    deny "Use uv instead of python -m pip / py -m pip. Examples: \`uv add <pkg>\`, \`uv sync\`."
+fi
+
+# Bare py launcher inside a compound command → uv run python
+if echo "$scannable" | grep -qE '(^|[;&|]\s*)py(\s|$)'; then
+    deny "Use \`uv run python ...\` instead of the py launcher. This ensures the correct virtual environment."
 fi
 
 # Bare python → uv run python
