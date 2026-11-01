@@ -19,9 +19,10 @@ GUARD_HOOK_COMMANDS = {
     "bash .claude/hooks/enforce-uv.sh",
     "bash .claude/hooks/protect-main.sh",
 }
-# `rm -rf` is not valid PowerShell (`-rf` matches no Remove-Item parameter), so
-# the Bash-only `rm` guard has no PowerShell counterpart.
-BASH_ONLY_PROGRAMS = {"rm"}
+# PowerShell guards deletes as `Remove-Item`, whose rule also matches its `rm`
+# alias, and has no `sudo`.
+BASH_ONLY_PROGRAMS = {"rm", "sudo"}
+PROTECT_MAIN_COMMAND = "bash .claude/hooks/protect-main.sh"
 IF_CONDITION_PATTERN = re.compile(r"^(?P<tool>Bash|PowerShell)\((?P<program>\S+) \*\)$")
 
 DENIED_COMMANDS = [
@@ -83,6 +84,12 @@ def test_settings_guard_every_bash_program_under_powershell_too() -> None:
     missing = expected_powershell_conditions - conditions["PowerShell"]
 
     assert not missing, f"guards wired for Bash but not PowerShell: {sorted(missing)}"
+
+
+def test_settings_guard_remove_item_under_powershell() -> None:
+    conditions = _guard_conditions_by_tool()
+
+    assert (PROTECT_MAIN_COMMAND, "Remove-Item") in conditions["PowerShell"]
 
 
 @pytest.mark.parametrize(("hook_name", "command"), DENIED_COMMANDS)

@@ -81,7 +81,7 @@ Hooks in `.claude/settings.json` enforce part of this file automatically. Work w
 - **Bare tools are blocked**: `python`, `pip`, `pytest`, `ruff`, `mypy`, `bandit` must run through `uv run` (or `uv add` for installs)
 - **Python files are formatted on every Edit/Write** (`ruff check --fix` + `ruff format`): no need to format manually
 - **Verification runs when you stop**: `ruff check` and `pytest -x` run at the end of each turn, and a failure sends you back to fix it
-- **Destructive commands are blocked**: force push (use `--force-with-lease`), push to `main`/`master`, `git reset --hard`, broad `rm -rf`
+- **Destructive commands are blocked**: force push (use `--force-with-lease`), push to `main`/`master`, `git reset --hard`, broad `rm -rf` / `Remove-Item -Recurse`
 
 ## Verification
 
